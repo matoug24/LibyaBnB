@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Booking Result{% endblock %}
+
+{% block content %}
+<h2>Booking Result</h2>
+
+{% if error %}
+    <div class="panel panel-error">
+        <p>{{ error }}</p>
+        <p><a href="javascript:history.back()">Go back and try again</a></p>
+    </div>
+{% elif booking %}
+    <div class="panel panel-success">
+        <p>Thank you, <strong>{{ booking.guest_name }}</strong>!</p>
+        <p>Your booking request has been received.</p>
+        <p>
+            <strong>Booking code:</strong>
+            <span class="badge badge-pending">{{ booking.booking_code }}</span>
+        </p>
+        <p>Status: <strong>{{ booking.status.value }}</strong> (pending confirmation).</p>
+    </div>
+
+    <p>
+        You can look up this booking later on the
+        <a href="/bookings/lookup/html">Find Booking</a> page using your code.
+    </p>
+    <p>
+        <a href="/bookings/calendar/{{ booking.property_id }}">Back to property calendar</a>
+    </p>
+{% else %}
+    <p>Unknown result.</p>
+{% endif %}
+{% endblock %}

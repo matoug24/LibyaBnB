@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Property Members{% endblock %}
+
+{% block content %}
+<h2>Members for: {{ property.name }}</h2>
+
+<div class="panel">
+    <h3>Current members</h3>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Supervisor?</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for m in members %}
+            <tr>
+                <td>{{ m.user.username }}</td>
+                <td>{{ m.role.value }}</td>
+                <td>{% if m.is_supervisor %}Yes{% else %}No{% endif %}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3" class="muted">No members assigned yet.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="panel">
+    <h3>Add / assign member</h3>
+    {% if error %}
+        <p class="form-error">{{ error }}</p>
+    {% endif %}
+    <form action="/properties/{{ property.id }}/members/html" method="post">
+        <label for="username">User username</label>
+        <input id="username" type="text" name="username" required>
+
+        <label for="role">Role on this property</label>
+        <select id="role" name="role" required>
+            <option value="owner">Owner (full control)</option>
+            <option value="admin">Admin (bookings only)</option>
+        </select>
+
+        <label class="checkbox">
+            <input type="checkbox" name="is_supervisor" value="true">
+            Mark as supervisor (acting on behalf of owner)
+        </label>
+
+        <button class="btn" type="submit">Add member</button>
+    </form>
+</div>
+
+<p>
+    <a href="/properties/html">&larr; Back to properties</a>
+</p>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h2>Welcome to LibyaBnB</h2>
+<p class="lead">
+    Simple reservations for guests, owners, admins, and supervisors.
+</p>
+
+<div class="home-grid">
+    <a class="card-link" href="/properties/html">
+        <div class="card">
+            <h3>Browse Properties</h3>
+            <p>View all properties and open their booking calendars.</p>
+        </div>
+    </a>
+
+    <a class="card-link" href="/bookings/lookup/html">
+        <div class="card">
+            <h3>Find My Booking</h3>
+            <p>Look up your booking using the booking code we gave you.</p>
+        </div>
+    </a>
+
+    <a class="card-link" href="/bookings/admin/list">
+        <div class="card">
+            <h3>Admin / Owner Dashboard</h3>
+            <p>See and manage bookings for your properties.</p>
+        </div>
+    </a>
+
+    <a class="card-link" href="/auth/signup">
+        <div class="card">
+            <h3>Create an Account</h3>
+            <p>Sign up as a standard user to keep your booking history.</p>
+        </div>
+    </a>
+</div>
+{% endblock %}

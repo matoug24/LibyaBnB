@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}New Property{% endblock %}
+
+{% block content %}
+<h2>Create New Property</h2>
+
+<form action="/properties/new/html" method="post" class="panel panel-narrow">
+    <label for="name">Property name</label>
+    <input id="name" type="text" name="name" required>
+
+    <label for="description">Description</label>
+    <input id="description" type="text" name="description">
+
+    <label for="owner_username">Assign owner username (optional)</label>
+    <input id="owner_username" type="text" name="owner_username"
+           placeholder="Existing username or leave blank">
+
+    <button class="btn" type="submit">Save property</button>
+
+    <p class="muted">
+        Only site owner / site admin can create new properties.
+    </p>
+</form>
+{% endblock %}

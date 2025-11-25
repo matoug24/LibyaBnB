@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}New Booking{% endblock %}
+
+{% block content %}
+<h2>Request a Booking for {{ property.name }}</h2>
+
+<form action="/bookings/html" method="post" class="panel panel-narrow">
+    <input type="hidden" name="property_id" value="{{ property.id }}">
+
+    <label for="start_date">Start date</label>
+    <input id="start_date" type="date" name="start_date" required>
+
+    <label for="end_date">End date</label>
+    <input id="end_date" type="date" name="end_date" required>
+
+    <label for="guest_name">Your name</label>
+    <input id="guest_name" type="text" name="guest_name" required>
+
+    <label for="guest_phone">Phone number</label>
+    <input id="guest_phone" type="text" name="guest_phone" required>
+
+    <button class="btn" type="submit">Submit booking request</button>
+
+    <p class="muted">
+        You don’t need an account to book as a guest.  
+        If you are logged in as a standard user, this booking will also be linked to your account.
+    </p>
+</form>
+{% endblock %}

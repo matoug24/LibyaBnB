@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<h2>Create Account</h2>
+
+<form action="/auth/signup" method="post" class="panel panel-narrow">
+    <h3>Standard user registration</h3>
+
+    <label for="username">Username</label>
+    <input id="username" type="text" name="username" required>
+
+    <label for="email">Email (optional)</label>
+    <input id="email" type="email" name="email">
+
+    <label for="password">Password</label>
+    <input id="password" type="password" name="password" required>
+
+    <button class="btn" type="submit">Create account</button>
+
+    {% if error %}
+        <p class="form-error">{{ error }}</p>
+    {% endif %}
+</form>
+
+<p class="muted">
+    Already have an account? <a href="/auth/login">Login</a>.
+</p>
+{% endblock %}

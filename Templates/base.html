@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LibyaBnB - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<header class="site-header">
+    <div class="container header-inner">
+        <h1 class="logo">
+            <a href="/">LibyaBnB</a>
+        </h1>
+        <nav class="main-nav">
+            <a href="/">Home</a>
+            <a href="/properties/html">Properties</a>
+            <a href="/bookings/lookup/html">Find Booking</a>
+            <a href="/bookings/admin/list">Admin Bookings</a>
+            <a href="/auth/signup">Sign Up</a>
+            <a href="/auth/login">Login</a>
+            <a href="/auth/logout">Logout</a>
+        </nav>
+        <div class="user-pill">
+            {% set username = request.cookies.get('session_username') %}
+            {% if username %}
+                <span>Logged in as <strong>{{ username }}</strong></span>
+            {% else %}
+                <span>Guest</span>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<main class="site-main">
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <p>&copy; 2025 LibyaBnB</p>
+    </div>
+</footer>
+</body>
+</html>

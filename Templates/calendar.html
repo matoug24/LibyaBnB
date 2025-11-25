@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Calendar for {{ property.name }}</h2>
+    <a class="btn" href="/bookings/new/{{ property.id }}">Request booking</a>
+</div>
+
+<p class="muted">{{ property.description }}</p>
+
+<table class="table table-calendar">
+    <thead>
+    <tr>
+        <th>Start</th>
+        <th>End</th>
+        <th>Guest</th>
+        <th>Status</th>
+        <th>Code</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for b in bookings %}
+        <tr class="status-{{ b.status.value }}">
+            <td>{{ b.start_date }}</td>
+            <td>{{ b.end_date }}</td>
+            <td>{{ b.guest_name }}</td>
+            <td class="badge-cell">
+                <span class="badge badge-{{ b.status.value }}">{{ b.status.value }}</span>
+            </td>
+            <td>{{ b.booking_code }}</td>
+        </tr>
+    {% else %}
+        <tr>
+            <td colspan="5" class="muted">No bookings yet.</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Admin Bookings{% endblock %}
+
+{% block content %}
+<h2>All Bookings (Admin / Owner / Supervisor)</h2>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Property</th>
+        <th>Dates</th>
+        <th>Guest</th>
+        <th>Phone</th>
+        <th>Status</th>
+        <th>Code</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for b in bookings %}
+        <tr class="status-{{ b.status.value }}">
+            <td>{{ b.id }}</td>
+            <td>{{ b.property.name if b.property else "N/A" }}</td>
+            <td>{{ b.start_date }} → {{ b.end_date }}</td>
+            <td>{{ b.guest_name }}</td>
+            <td>{{ b.guest_phone }}</td>
+            <td>
+                <span class="badge badge-{{ b.status.value }}">{{ b.status.value }}</span>
+            </td>
+            <td>{{ b.booking_code }}</td>
+            <td>
+                {% if b.status.value == "pending" %}
+                    <a class="btn btn-small" href="/bookings/{{ b.id }}/confirm/html">Confirm</a>
+                {% else %}
+                    <span class="muted">—</span>
+                {% endif %}
+            </td>
+        </tr>
+    {% else %}
+        <tr>
+            <td colspan="8" class="muted">No bookings found.</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

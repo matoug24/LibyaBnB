@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Properties{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Properties</h2>
+    <a href="/properties/new/html" class="btn">Create New Property</a>
+</div>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Calendar</th>
+        <th>Book</th>
+        <th>Members</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for p in properties %}
+        <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.name }}</td>
+            <td>{{ p.description }}</td>
+            <td><a href="/bookings/calendar/{{ p.id }}">View calendar</a></td>
+            <td><a href="/bookings/new/{{ p.id }}">Request booking</a></td>
+            <td><a href="/properties/{{ p.id }}/members/html">Admins / Supervisors</a></td>
+        </tr>
+    {% else %}
+        <tr>
+            <td colspan="6" class="muted">No properties yet.</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

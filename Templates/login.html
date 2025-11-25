@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<h2>Login</h2>
+
+<div class="auth-grid">
+    <form action="/auth/login" method="post" class="panel">
+        <h3>Login to your account</h3>
+
+        <label for="username">Username</label>
+        <input id="username" type="text" name="username" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" required>
+
+        <button class="btn" type="submit">Login</button>
+
+        {% if error %}
+            <p class="form-error">{{ error }}</p>
+        {% endif %}
+    </form>
+
+    <div class="panel panel-alt">
+        <h3>New here?</h3>
+        <p>Create a free standard user account.</p>
+        <a class="btn btn-outline" href="/auth/signup">Sign up</a>
+    </div>
+</div>
+{% endblock %}

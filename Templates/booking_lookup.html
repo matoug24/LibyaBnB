@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Find Booking{% endblock %}
+
+{% block content %}
+<h2>Find Your Booking</h2>
+
+<form action="/bookings/lookup/html" method="post" class="panel panel-narrow">
+    <label for="booking_code">Booking code</label>
+    <input id="booking_code" type="text" name="booking_code" required>
+
+    <button class="btn" type="submit">Search</button>
+
+    {% if error %}
+        <p class="form-error">{{ error }}</p>
+    {% endif %}
+</form>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Booking {{ booking.booking_code }}{% endblock %}
+
+{% block content %}
+<h2>Booking Details</h2>
+
+<table class="table">
+    <tbody>
+    <tr>
+        <th>Booking code</th>
+        <td>{{ booking.booking_code }}</td>
+    </tr>
+    <tr>
+        <th>Guest</th>
+        <td>{{ booking.guest_name }} ({{ booking.guest_phone }})</td>
+    </tr>
+    <tr>
+        <th>Dates</th>
+        <td>{{ booking.start_date }} → {{ booking.end_date }}</td>
+    </tr>
+    <tr>
+        <th>Status</th>
+        <td>
+            <span class="badge badge-{{ booking.status.value }}">{{ booking.status.value }}</span>
+        </td>
+    </tr>
+    <tr>
+        <th>Created at</th>
+        <td>{{ booking.created_at }}</td>
+    </tr>
+    </tbody>
+</table>
+
+<p>
+    <a href="/bookings/lookup/html">&larr; Search another booking</a>
+</p>
+{% endblock %}
