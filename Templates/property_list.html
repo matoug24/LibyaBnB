@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
     <h2>Properties</h2>
-    <a href="/properties/new/html" class="btn">Create New Property</a>
+    <a class="btn" href="/properties/new/html">Create new property</a>
 </div>
 
 <table class="table">
@@ -12,6 +12,7 @@
     <tr>
         <th>ID</th>
         <th>Name</th>
+        <th>Type / Capacity</th>
         <th>Description</th>
         <th>Calendar</th>
         <th>Book</th>
@@ -22,15 +23,19 @@
     {% for p in properties %}
         <tr>
             <td>{{ p.id }}</td>
-            <td>{{ p.name }}</td>
-            <td>{{ p.description }}</td>
+            <td><a href="/properties/{{ p.id }}/detail/html">{{ p.name }}</a></td>
+            <td>
+                {% if p.property_type %}{{ p.property_type }}{% endif %}
+                {% if p.capacity %} · {{ p.capacity }} guests{% endif %}
+            </td>
+            <td>{{ p.short_description }}</td>
             <td><a href="/bookings/calendar/{{ p.id }}">View calendar</a></td>
             <td><a href="/bookings/new/{{ p.id }}">Request booking</a></td>
             <td><a href="/properties/{{ p.id }}/members/html">Admins / Supervisors</a></td>
         </tr>
     {% else %}
         <tr>
-            <td colspan="6" class="muted">No properties yet.</td>
+            <td colspan="7" class="muted">No properties yet. Click “Create new property” to add one.</td>
         </tr>
     {% endfor %}
     </tbody>

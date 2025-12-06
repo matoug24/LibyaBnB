@@ -5,3 +5,5 @@ jinja2
 python-multipart
 pydantic
 pydantic-settings
+passlib[bcrypt]
+python-jose[cryptography]

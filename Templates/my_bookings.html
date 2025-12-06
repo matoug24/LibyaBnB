@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Admin Bookings{% endblock %}
+{% block title %}My Bookings{% endblock %}
 
 {% block content %}
-<h2>Bookings (Admin / Owner view)</h2>
+<h2>My bookings</h2>
 
 <div class="panel">
     <table class="table">
@@ -10,10 +10,8 @@
         <tr>
             <th>Code</th>
             <th>Property</th>
-            <th>Guest</th>
             <th>Dates</th>
             <th>Status</th>
-            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -27,24 +25,14 @@
                         (deleted)
                     {% endif %}
                 </td>
-                <td>{{ b.guest_name }}</td>
                 <td>{{ b.start_date }} → {{ b.end_date }}</td>
                 <td>
                     <span class="badge status-{{ b.status.value }}">{{ b.status.value|capitalize }}</span>
                 </td>
-                <td>
-                    <a href="/bookings/lookup/html" onclick="event.preventDefault();">
-                        <span class="muted small">Code: {{ b.booking_code }}</span>
-                    </a>
-                    {% if b.status.value == "pending" %}
-                        <br>
-                        <a class="btn btn-small" href="/bookings/{{ b.id }}/confirm/html">Confirm</a>
-                    {% endif %}
-                </td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="6" class="muted">No bookings yet.</td>
+                <td colspan="4" class="muted">You have no bookings yet.</td>
             </tr>
         {% endfor %}
         </tbody>

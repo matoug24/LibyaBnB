@@ -1,12 +1,16 @@
-# routers/auth.py
-from fastapi import APIRouter, Depends, Request, Form, status
+from fastapi import APIRouter, Depends, Request, Form, status, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from database import SessionLocal
-from deps import get_db, get_current_user
+from deps import get_db
 from models import User, SiteRole
+from security import (
+    get_password_hash,
+    verify_password,
+    create_access_token,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,16 +41,18 @@ def signup(
             {"request": request, "error": "Username already taken."},
             status_code=status.HTTP_400_BAD_REQUEST,
         )
+
+    hashed_password = get_password_hash(password)
+
     user = User(
         username=username,
         email=email or None,
-        password=password,
+        password=hashed_password,
         site_role=SiteRole.standard,
     )
     db.add(user)
     db.commit()
-    response = RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
-    return response
+    return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -65,13 +71,14 @@ def login(
     db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.username == username).first()
-    if not user or user.password != password:
+    if not user or not verify_password(password, user.password):
         return templates.TemplateResponse(
             "login.html",
             {"request": request, "error": "Invalid username or password."},
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
+    # Cookie-based "session" for HTML pages
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
@@ -86,3 +93,33 @@ def logout():
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     response.delete_cookie(SESSION_COOKIE_NAME)
     return response
+
+
+# --- JWT-based login for API clients (Postman / SPA frontends etc.) ---
+
+
+@router.post("/token")
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    """
+    Standard OAuth2 password flow endpoint.
+
+    Request:
+      POST /auth/token
+      Content-Type: application/x-www-form-urlencoded
+      body: username=...&password=...
+
+    Response:
+      { "access_token": "...", "token_type": "bearer" }
+    """
+    user = db.query(User).filter(User.username == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
+
+    access_token = create_access_token({"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}

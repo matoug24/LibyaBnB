@@ -2,16 +2,22 @@
 {% block title %}Find Booking{% endblock %}
 
 {% block content %}
-<h2>Find Your Booking</h2>
+<h2>Find your booking</h2>
 
 <form action="/bookings/lookup/html" method="post" class="panel panel-narrow">
     <label for="booking_code">Booking code</label>
     <input id="booking_code" type="text" name="booking_code" required>
 
-    <button class="btn" type="submit">Search</button>
+    <button class="btn" type="submit">Lookup</button>
 
     {% if error %}
         <p class="form-error">{{ error }}</p>
     {% endif %}
 </form>
+
+<p class="muted">
+    The booking code was shown on the confirmation screen when you submitted your request.
+</p>
+
+<p><a href="/">Back to home</a></p>
 {% endblock %}

@@ -2,32 +2,44 @@
 {% block title %}Booking Result{% endblock %}
 
 {% block content %}
-<h2>Booking Result</h2>
+<h2>Booking request</h2>
 
 {% if error %}
-    <div class="panel panel-error">
-        <p>{{ error }}</p>
-        <p><a href="javascript:history.back()">Go back and try again</a></p>
+    <div class="panel">
+        <p class="form-error">{{ error }}</p>
+        {% if property %}
+            <p>
+                <a href="/bookings/new/{{ property.id }}">Try again</a> ·
+                <a href="/bookings/calendar/{{ property.id }}">View calendar</a>
+            </p>
+        {% else %}
+            <p><a href="/properties/html">Back to properties</a></p>
+        {% endif %}
     </div>
-{% elif booking %}
-    <div class="panel panel-success">
-        <p>Thank you, <strong>{{ booking.guest_name }}</strong>!</p>
-        <p>Your booking request has been received.</p>
-        <p>
-            <strong>Booking code:</strong>
-            <span class="badge badge-pending">{{ booking.booking_code }}</span>
-        </p>
-        <p>Status: <strong>{{ booking.status.value }}</strong> (pending confirmation).</p>
-    </div>
-
-    <p>
-        You can look up this booking later on the
-        <a href="/bookings/lookup/html">Find Booking</a> page using your code.
-    </p>
-    <p>
-        <a href="/bookings/calendar/{{ booking.property_id }}">Back to property calendar</a>
-    </p>
 {% else %}
-    <p>Unknown result.</p>
+    <div class="panel">
+        <h3>Pending booking created</h3>
+        <p>
+            Thank you, {{ booking.guest_name }}. Your booking is now
+            <span class="badge status-{{ booking.status.value }}">{{ booking.status.value|capitalize }}</span>.
+        </p>
+        <p>
+            Your booking code is:<br>
+            <strong class="booking-code">{{ booking.booking_code }}</strong>
+        </p>
+        <p>
+            Please contact the property admin or owner and provide this code to confirm payment.
+            If not confirmed within 24 hours, the booking will automatically expire.
+        </p>
+        <p>
+            Dates: <strong>{{ booking.start_date }} → {{ booking.end_date }}</strong>
+        </p>
+        <p>
+            <a href="/bookings/lookup/html">Find booking by code</a> ·
+            <a href="/bookings/calendar/{{ booking.property_id }}">View calendar</a>
+        </p>
+    </div>
 {% endif %}
+
+<p><a href="/">Back to home</a></p>
 {% endblock %}

@@ -4,37 +4,41 @@
 {% block content %}
 <div class="page-header">
     <h2>Calendar for {{ property.name }}</h2>
-    <a class="btn" href="/bookings/new/{{ property.id }}">Request booking</a>
+    <div class="header-actions">
+        <a class="btn" href="/bookings/new/{{ property.id }}">Request booking</a>
+        <a class="btn btn-outline" href="/properties/{{ property.id }}/detail/html">Property details</a>
+    </div>
 </div>
 
-<p class="muted">{{ property.description }}</p>
-
-<table class="table table-calendar">
-    <thead>
-    <tr>
-        <th>Start</th>
-        <th>End</th>
-        <th>Guest</th>
-        <th>Status</th>
-        <th>Code</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for b in bookings %}
-        <tr class="status-{{ b.status.value }}">
-            <td>{{ b.start_date }}</td>
-            <td>{{ b.end_date }}</td>
-            <td>{{ b.guest_name }}</td>
-            <td class="badge-cell">
-                <span class="badge badge-{{ b.status.value }}">{{ b.status.value }}</span>
-            </td>
-            <td>{{ b.booking_code }}</td>
-        </tr>
-    {% else %}
+<div class="panel">
+    <h3>Bookings</h3>
+    <table class="table">
+        <thead>
         <tr>
-            <td colspan="5" class="muted">No bookings yet.</td>
+            <th>Code</th>
+            <th>Guest</th>
+            <th>Dates</th>
+            <th>Status</th>
         </tr>
-    {% endfor %}
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+        {% for b in bookings %}
+            <tr>
+                <td>{{ b.booking_code }}</td>
+                <td>{{ b.guest_name }}</td>
+                <td>{{ b.start_date }} → {{ b.end_date }}</td>
+                <td>
+                    <span class="badge status-{{ b.status.value }}">{{ b.status.value|capitalize }}</span>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4" class="muted">No bookings yet for this property.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p><a href="/properties/html">&larr; Back to properties</a></p>
 {% endblock %}

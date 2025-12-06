@@ -8,10 +8,56 @@
     <label for="name">Property name</label>
     <input id="name" type="text" name="name" required>
 
-    <label for="description">Description</label>
-    <input id="description" type="text" name="description">
+    <label for="short_description">Short description</label>
+    <input id="short_description" type="text" name="short_description">
 
-    <label for="owner_username">Assign owner username (optional)</label>
+    <h3>Basics</h3>
+    <label for="property_type">Property type</label>
+    <input id="property_type" type="text" name="property_type" placeholder="Apartment, Villa, Studio">
+
+    <label for="capacity">Capacity (guests)</label>
+    <input id="capacity" type="number" min="1" name="capacity">
+
+    <label for="amenities">Amenities (comma-separated)</label>
+    <input id="amenities" type="text" name="amenities" placeholder="WiFi, Parking, Pool">
+
+    <h3>Location</h3>
+    <label for="address_line">Address</label>
+    <input id="address_line" type="text" name="address_line">
+
+    <label for="city">City</label>
+    <input id="city" type="text" name="city">
+
+    <label for="country">Country</label>
+    <input id="country" type="text" name="country">
+
+    <label for="latitude">Latitude</label>
+    <input id="latitude" type="text" name="latitude">
+
+    <label for="longitude">Longitude</label>
+    <input id="longitude" type="text" name="longitude">
+
+    <label class="checkbox">
+        <input type="checkbox" name="is_exact_location" checked>
+        Show exact location (uncheck to show approximate location)
+    </label>
+
+    <h3>Contact</h3>
+    <label for="contact_name">Contact name</label>
+    <input id="contact_name" type="text" name="contact_name">
+
+    <label for="contact_phone">Phone</label>
+    <input id="contact_phone" type="text" name="contact_phone">
+
+    <label for="contact_email">Email</label>
+    <input id="contact_email" type="email" name="contact_email">
+
+    <h3>Pricing</h3>
+    <label for="base_price_per_night">Base price per night</label>
+    <input id="base_price_per_night" type="number" step="0.01" name="base_price_per_night">
+
+    <h3>Owner assignment</h3>
+    <label for="owner_username">Owner username (optional)</label>
     <input id="owner_username" type="text" name="owner_username"
            placeholder="Existing username or leave blank">
 
@@ -21,4 +67,6 @@
         Only site owner / site admin can create new properties.
     </p>
 </form>
+
+<p><a href="/properties/html">&larr; Back to properties</a></p>
 {% endblock %}

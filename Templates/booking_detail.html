@@ -1,37 +1,32 @@
 {% extends "base.html" %}
-{% block title %}Booking {{ booking.booking_code }}{% endblock %}
+{% block title %}Booking Detail{% endblock %}
 
 {% block content %}
-<h2>Booking Details</h2>
+<h2>Booking {{ booking.booking_code }}</h2>
 
-<table class="table">
-    <tbody>
-    <tr>
-        <th>Booking code</th>
-        <td>{{ booking.booking_code }}</td>
-    </tr>
-    <tr>
-        <th>Guest</th>
-        <td>{{ booking.guest_name }} ({{ booking.guest_phone }})</td>
-    </tr>
-    <tr>
-        <th>Dates</th>
-        <td>{{ booking.start_date }} → {{ booking.end_date }}</td>
-    </tr>
-    <tr>
-        <th>Status</th>
-        <td>
-            <span class="badge badge-{{ booking.status.value }}">{{ booking.status.value }}</span>
-        </td>
-    </tr>
-    <tr>
-        <th>Created at</th>
-        <td>{{ booking.created_at }}</td>
-    </tr>
-    </tbody>
-</table>
+<div class="panel">
+    <p><strong>Property:</strong>
+        {% if booking.property %}
+            <a href="/properties/{{ booking.property.id }}/detail/html">{{ booking.property.name }}</a>
+        {% else %}
+            (deleted property)
+        {% endif %}
+    </p>
+    <p><strong>Guest:</strong> {{ booking.guest_name }} ({{ booking.guest_phone }})</p>
+    <p><strong>Dates:</strong> {{ booking.start_date }} → {{ booking.end_date }}</p>
+    <p>
+        <strong>Status:</strong>
+        <span class="badge status-{{ booking.status.value }}">{{ booking.status.value|capitalize }}</span>
+    </p>
+    <p><strong>Created at:</strong> {{ booking.created_at }}</p>
+</div>
 
 <p>
-    <a href="/bookings/lookup/html">&larr; Search another booking</a>
+    <a href="/bookings/lookup/html">Lookup another booking</a> ·
+    {% if booking.property %}
+        <a href="/bookings/calendar/{{ booking.property.id }}">View calendar for this property</a>
+    {% endif %}
 </p>
+
+<p><a href="/">Back to home</a></p>
 {% endblock %}

@@ -1,6 +1,6 @@
-# routers/bookings.py
 from datetime import datetime, timedelta, date
-import random, string
+import random
+import string
 from typing import List
 
 from fastapi import (
@@ -18,11 +18,11 @@ from sqlalchemy.orm import Session
 from deps import (
     get_db,
     get_current_user_optional,
-    require_property_admin_or_owner,
-    require_site_admin_or_owner,
+    get_current_user,
+    get_current_user_jwt_optional,
 )
-from models import Booking, BookingStatus, Property, PropertyMember, SiteRole, User
-from schemas import BookingCreate, BookingOut, BookingUpdateStatus
+from models import Booking, BookingStatus, Property, User, SiteRole, PropertyRole
+from schemas import BookingCreate, BookingOut
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
@@ -52,8 +52,6 @@ def expire_old_pending_bookings(db: Session):
     if changed:
         db.commit()
 
-
-# ---------- HTML: calendar + booking form ----------
 
 @router.get("/calendar/{property_id}", response_class=HTMLResponse)
 def view_calendar(
@@ -165,8 +163,6 @@ def create_booking_html(
     )
 
 
-# ---------- HTML: lookup booking by code ----------
-
 @router.get("/lookup/html", response_class=HTMLResponse)
 def lookup_booking_form(request: Request):
     return templates.TemplateResponse(
@@ -202,32 +198,27 @@ def lookup_booking_html(
     )
 
 
-# ---------- HTML: admin list & confirm/cancel ----------
-
 @router.get("/admin/list", response_class=HTMLResponse)
 def admin_list_bookings(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_optional),
+    current_user: User | None = Depends(get_current_user_optional),
 ):
     expire_old_pending_bookings(db)
 
-    if current_user and current_user.site_role in {SiteRole.site_owner, SiteRole.site_admin}:
-        # site owner/admin see all bookings
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Login required")
+
+    if current_user.site_role in {SiteRole.site_owner, SiteRole.site_admin}:
         bookings = db.query(Booking).order_by(Booking.created_at.desc()).all()
-    elif current_user:
-        # property owner/admin (or supervisor) see bookings for their properties
-        property_ids = [
-            m.property_id for m in current_user.property_memberships
-        ]
+    else:
+        property_ids = [m.property_id for m in current_user.property_memberships]
         bookings = (
             db.query(Booking)
             .filter(Booking.property_id.in_(property_ids))
             .order_by(Booking.created_at.desc())
             .all()
         )
-    else:
-        raise HTTPException(status_code=401, detail="Login required")
 
     return templates.TemplateResponse(
         "admin_bookings.html",
@@ -239,14 +230,16 @@ def admin_list_bookings(
 def confirm_booking_html(
     booking_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_optional),
+    current_user: User | None = Depends(get_current_user_optional),
 ):
     expire_old_pending_bookings(db)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Login required")
+
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
 
-    # Site admin/owner OR property admin/owner for this booking
     allowed = False
     if current_user.site_role in {SiteRole.site_owner, SiteRole.site_admin}:
         allowed = True
@@ -272,13 +265,30 @@ def confirm_booking_html(
     return RedirectResponse(url="/bookings/admin/list", status_code=status.HTTP_302_FOUND)
 
 
-# ---------- JSON Booking API ----------
+@router.get("/my/html", response_class=HTMLResponse)
+def my_bookings_html(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    expire_old_pending_bookings(db)
+    bookings = (
+        db.query(Booking)
+        .filter(Booking.user_id == current_user.id)
+        .order_by(Booking.created_at.desc())
+        .all()
+    )
+    return templates.TemplateResponse(
+        "my_bookings.html",
+        {"request": request, "bookings": bookings},
+    )
+
 
 @router.post("/", response_model=BookingOut)
 def create_booking_api(
     payload: BookingCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user_optional),
+    current_user = Depends(get_current_user_jwt_optional),
 ):
     expire_old_pending_bookings(db)
 

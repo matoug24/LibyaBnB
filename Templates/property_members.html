@@ -2,14 +2,15 @@
 {% block title %}Property Members{% endblock %}
 
 {% block content %}
-<h2>Members for: {{ property.name }}</h2>
+<h2>Admins &amp; Supervisors for {{ property.name }}</h2>
 
 <div class="panel">
     <h3>Current members</h3>
     <table class="table">
         <thead>
         <tr>
-            <th>User</th>
+            <th>User ID</th>
+            <th>Username</th>
             <th>Role</th>
             <th>Supervisor?</th>
         </tr>
@@ -17,44 +18,44 @@
         <tbody>
         {% for m in members %}
             <tr>
+                <td>{{ m.user.id }}</td>
                 <td>{{ m.user.username }}</td>
                 <td>{{ m.role.value }}</td>
-                <td>{% if m.is_supervisor %}Yes{% else %}No{% endif %}</td>
+                <td>{{ "Yes" if m.is_supervisor else "No" }}</td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="3" class="muted">No members assigned yet.</td>
+                <td colspan="4" class="muted">No members assigned yet.</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 </div>
 
-<div class="panel">
-    <h3>Add / assign member</h3>
-    {% if error %}
-        <p class="form-error">{{ error }}</p>
-    {% endif %}
+<div class="panel panel-narrow">
+    <h3>Add member</h3>
     <form action="/properties/{{ property.id }}/members/html" method="post">
-        <label for="username">User username</label>
+        <label for="username">Username</label>
         <input id="username" type="text" name="username" required>
 
-        <label for="role">Role on this property</label>
+        <label for="role">Role</label>
         <select id="role" name="role" required>
-            <option value="owner">Owner (full control)</option>
-            <option value="admin">Admin (bookings only)</option>
+            <option value="owner">Owner</option>
+            <option value="admin">Admin</option>
         </select>
 
         <label class="checkbox">
-            <input type="checkbox" name="is_supervisor" value="true">
-            Mark as supervisor (acting on behalf of owner)
+            <input type="checkbox" name="is_supervisor">
+            Supervisor
         </label>
 
         <button class="btn" type="submit">Add member</button>
+
+        {% if error %}
+            <p class="form-error">{{ error }}</p>
+        {% endif %}
     </form>
 </div>
 
-<p>
-    <a href="/properties/html">&larr; Back to properties</a>
-</p>
+<p><a href="/properties/{{ property.id }}/detail/html">&larr; Back to property</a></p>
 {% endblock %}
