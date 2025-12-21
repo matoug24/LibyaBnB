@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Supervisors{% endblock %}
+{% block content %}
+<div class="row-between">
+  <h1 class="page-title">Supervisors</h1>
+  <a class="btn" href="/supervisors/signup">Supervisor sign up</a>
+</div>
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Districts</th><th>Services</th><th></th></tr></thead>
+    <tbody>
+      {% for s in supervisors %}
+        <tr>
+          <td><a href="/supervisors/{{ s.id }}">{{ s.full_name or s.username }}</a></td>
+          <td>{{ s.phone or "" }}</td>
+          <td>{{ s.email or "" }}</td>
+          <td class="muted">{{ s.supervisor_districts or "" }}</td>
+          <td class="muted">{{ s.supervisor_services or "" }}</td>
+          <td><a class="btn btn-sm btn-outline" href="/supervisors/{{ s.id }}/agentlistings">Agent listings</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="muted">No supervisors yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

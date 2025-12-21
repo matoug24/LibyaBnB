@@ -1,60 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Home{% endblock %}
-
 {% block content %}
-<h2>Welcome to LibyaBnB</h2>
-<p class="lead">
-    Guests can book without accounts, or sign up to keep their history. Owners and admins can manage listings and bookings.
-</p>
+  <h1 class="h1">Available listings</h1>
+  <p class="muted">Browse properties and book your stay.</p>
 
-<div class="home-grid">
-    <a class="card-link" href="/properties/html">
-        <div class="card">
-            <h3>Browse Properties</h3>
-            <p>See all listings and open their booking calendars.</p>
-        </div>
-    </a>
-
-    <a class="card-link" href="/properties/new/html">
-        <div class="card">
-            <h3>Create New Listing</h3>
-            <p>Site owner / admin can add new properties.</p>
-        </div>
-    </a>
-
-    <a class="card-link" href="/bookings/new/1">
-        <div class="card">
-            <h3>Request a Booking</h3>
-            <p>Pick a property from the list and send a booking request.</p>
-        </div>
-    </a>
-
-    <a class="card-link" href="/bookings/lookup/html">
-        <div class="card">
-            <h3>Find My Booking</h3>
-            <p>Use your booking code to see details.</p>
-        </div>
-    </a>
-
-    <a class="card-link" href="/bookings/my/html">
-        <div class="card">
-            <h3>My Bookings</h3>
-            <p>Standard signed-in users can see all their bookings.</p>
-        </div>
-    </a>
-
-    <a class="card-link" href="/bookings/admin/list">
-        <div class="card">
-            <h3>Admin / Owner Bookings</h3>
-            <p>Property admins / owners / site admins manage bookings.</p>
-        </div>
-    </a>
-
-    <a class="card-link" href="/auth/signup">
-        <div class="card">
-            <h3>Create Account</h3>
-            <p>Register as a standard user to keep booking history.</p>
-        </div>
-    </a>
-</div>
+  <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+    {% for p in properties %}
+      <div class="card" style="overflow:hidden;">
+        <a href="/listings/{{ p.id }}" style="text-decoration:none;color:inherit;">
+          <div style="height:190px;background:#f3f4f6;border-bottom:1px solid var(--border);">
+            {% if cover_map.get(p.id) %}
+              <img src="/static/{{ cover_map.get(p.id) }}" alt="{{ p.name }}" style="width:100%;height:100%;object-fit:cover;display:block;">
+            {% else %}
+              <div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700;">No photos yet</div>
+            {% endif %}
+          </div>
+          <div style="padding:14px;">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+              <div style="font-weight:800">{{ p.name }}</div>
+              {% if p.base_price_per_night %}
+                <div style="font-weight:800;white-space:nowrap;">{{ "%.0f"|format(p.base_price_per_night) }} LYD<span class="muted" style="font-weight:600">/night</span></div>
+              {% endif %}
+            </div>
+            <div class="muted" style="margin-top:6px;">
+              {{ (p.city or "") ~ (" • " if p.city and p.country else "") ~ (p.country or "") }}
+            </div>
+            {% if p.short_description %}
+              <div style="margin-top:8px;">{{ p.short_description }}</div>
+            {% endif %}
+          </div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
 {% endblock %}

@@ -1,29 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Sign Up{% endblock %}
-
+{% block title %}Sign up{% endblock %}
 {% block content %}
-<h2>Create Account</h2>
-
-<form action="/auth/signup" method="post" class="panel panel-narrow">
-    <h3>Standard user registration</h3>
-
-    <label for="username">Username</label>
-    <input id="username" type="text" name="username" required>
-
-    <label for="email">Email (optional)</label>
-    <input id="email" type="email" name="email">
-
-    <label for="password">Password</label>
-    <input id="password" type="password" name="password" required>
-
-    <button class="btn" type="submit">Create account</button>
-
-    {% if error %}
-        <p class="form-error">{{ error }}</p>
+<h1 class="page-title">{% if is_supervisor_signup %}Supervisor sign up{% else %}Sign up{% endif %}</h1>
+<div class="panel">
+  <form method="post" action="{% if is_supervisor_signup %}/supervisors/signup{% else %}/signup{% endif %}" class="form">
+    <label>Username</label>
+    <input type="text" name="username" required />
+    <label>Password</label>
+    <input type="password" name="password" required />
+    <label>Name</label>
+    <input type="text" name="full_name" />
+    <label>Phone</label>
+    <input type="text" name="phone" />
+    <label>Email</label>
+    <input type="email" name="email" />
+    <label class="check"><input type="checkbox" name="whatsapp_enabled" /> Phone has WhatsApp</label>
+    {% if is_supervisor_signup %}
+      <label>Districts (comma-separated)</label>
+      <input type="text" name="supervisor_districts" />
+      <label>Services (comma-separated)</label>
+      <input type="text" name="supervisor_services" />
     {% endif %}
-</form>
-
-<p class="muted">
-    Already have an account? <a href="/auth/login">Login</a>.
-</p>
+    <button class="btn" type="submit">Create account</button>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  </form>
+</div>
 {% endblock %}

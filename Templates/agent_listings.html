@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Agent listings{% endblock %}
+{% block content %}
+<h1 class="page-title">Agent listings — {{ supervisor.full_name or supervisor.username }}</h1>
+<div class="grid">
+  {% for p in properties %}
+    <a class="card" href="/listings/{{ p.id }}"><div class="card-body"><h3 class="card-title">{{ p.name }}</h3></div></a>
+  {% else %}
+    <p class="muted">No affiliated listings.</p>
+  {% endfor %}
+</div>
+{% endblock %}

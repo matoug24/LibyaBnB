@@ -1,0 +1,38 @@
+{% set hero = images[0] if images and images|length > 0 else None %}
+<div class="gallery">
+  <div class="hero">
+    {% if hero %}
+      <img src="/static/{{ hero.file_path }}" alt="Photo">
+    {% else %}
+      <div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:800;">No photos yet</div>
+    {% endif %}
+  </div>
+  <div class="thumbs">
+    {% for img in images[1:5] %}
+      <div class="thumb"><img src="/static/{{ img.file_path }}" alt="Photo"></div>
+    {% endfor %}
+    {% for _ in range(0, 4 - (images[1:5]|length)) %}
+      <div class="thumb" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:800;">—</div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="gallery-actions">
+  {% if images and images|length > 0 %}
+    <button type="button" class="link-btn" id="viewAllPhotosBtn">View all photos</button>
+  {% endif %}
+</div>
+
+<div class="modal" id="photoModal" aria-hidden="true">
+  <div class="modal-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+      <div style="font-weight:900;font-size:18px;">Photos</div>
+      <button type="button" class="link-btn" id="photoModalClose">Close</button>
+    </div>
+    <div class="modal-grid">
+      {% for img in images %}
+        <img src="/static/{{ img.file_path }}" alt="Photo">
+      {% endfor %}
+    </div>
+  </div>
+</div>

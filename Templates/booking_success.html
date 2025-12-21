@@ -1,45 +1,31 @@
 {% extends "base.html" %}
-{% block title %}Booking Result{% endblock %}
-
+{% block title %}Booking created{% endblock %}
 {% block content %}
-<h2>Booking request</h2>
+<h1 class="page-title">Booking created</h1>
+<div class="panel">
+  <div class="kv">
+    <div><span class="k">Listing</span><span class="v"><a href="/listings/{{ property.id }}">{{ property.name }}</a></span></div>
+    <div><span class="k">Dates</span><span class="v">{{ booking.start_date }} → {{ booking.end_date }}</span></div>
+    <div><span class="k">Status</span><span class="v"><span class="badge badge-{{ booking.status.value }}">{{ booking.status.value }}</span></span></div>
+    <div><span class="k">Booking code</span><span class="v"><strong class="code">{{ booking.booking_code }}</strong></span></div>
+    <div><span class="k">Phone</span><span class="v">{{ booking.guest_phone }}</span></div>
+    <div><span class="k">Email</span><span class="v">{{ booking.guest_email }}</span></div>
+  </div>
+  <p class="muted small">Keep your booking code. Use “My booking” with phone + code anytime.</p>
+</div>
 
-{% if error %}
-    <div class="panel">
-        <p class="form-error">{{ error }}</p>
-        {% if property %}
-            <p>
-                <a href="/bookings/new/{{ property.id }}">Try again</a> ·
-                <a href="/bookings/calendar/{{ property.id }}">View calendar</a>
-            </p>
-        {% else %}
-            <p><a href="/properties/html">Back to properties</a></p>
-        {% endif %}
-    </div>
-{% else %}
-    <div class="panel">
-        <h3>Pending booking created</h3>
-        <p>
-            Thank you, {{ booking.guest_name }}. Your booking is now
-            <span class="badge status-{{ booking.status.value }}">{{ booking.status.value|capitalize }}</span>.
-        </p>
-        <p>
-            Your booking code is:<br>
-            <strong class="booking-code">{{ booking.booking_code }}</strong>
-        </p>
-        <p>
-            Please contact the property admin or owner and provide this code to confirm payment.
-            If not confirmed within 24 hours, the booking will automatically expire.
-        </p>
-        <p>
-            Dates: <strong>{{ booking.start_date }} → {{ booking.end_date }}</strong>
-        </p>
-        <p>
-            <a href="/bookings/lookup/html">Find booking by code</a> ·
-            <a href="/bookings/calendar/{{ booking.property_id }}">View calendar</a>
-        </p>
-    </div>
-{% endif %}
 
-<p><a href="/">Back to home</a></p>
+
+<div class="actions">
+  <a class="btn btn-outline" href="/my-booking">My booking lookup</a>
+  <a class="btn" href="/">Back to listings</a>
+  {% if booking.status.value in ['pending', 'confirmed'] %}
+    <div class="hr"></div>
+    <form method="post" action="/my-booking/cancel" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
+      <input type="hidden" name="booking_code" value="{{ booking.booking_code }}">
+      <input type="hidden" name="phone" value="{{ booking.guest_phone }}">
+      <button type="submit" class="btn btn-danger" style="width:100%;">Cancel Booking</button>
+    </form>
+    {% endif %}
+</div>
 {% endblock %}

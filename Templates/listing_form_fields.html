@@ -1,0 +1,163 @@
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div>
+        <label>Property Name</label>
+        <input type="text" name="name" class="input" value="{{ property.name if property else '' }}" required />
+    </div>
+    <div>
+        <label>Property Type</label>
+        <input type="text" name="property_type" class="input" value="{{ property.property_type if property else '' }}" placeholder="e.g. Apartment, Villa" />
+    </div>
+</div>
+
+<label>Short Description</label>
+<textarea name="short_description" class="input" rows="3" placeholder="Describe your property...">{{ property.short_description if property else '' }}</textarea>
+
+<div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px;">
+    <div>
+        <label>City</label>
+        <input type="text" name="city" class="input" value="{{ property.city if property else '' }}" />
+    </div>
+    <div>
+        <label>Country</label>
+        <input type="text" name="country" class="input" value="{{ property.country if property else '' }}" />
+    </div>
+    <div>
+        <label>Capacity (Guests)</label>
+        <input type="number" name="capacity" class="input" value="{{ property.capacity if property and property.capacity is not none else '' }}" />
+    </div>
+</div>
+
+<label>Address Line</label>
+<input type="text" name="address_line" class="input" value="{{ property.address_line if property else '' }}" />
+
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+    <div>
+        <label>Latitude</label>
+        <input type="text" name="latitude" class="input" value="{{ property.latitude if property and property.latitude is not none else '' }}" />
+    </div>
+    <div>
+        <label>Longitude</label>
+        <input type="text" name="longitude" class="input" value="{{ property.longitude if property and property.longitude is not none else '' }}" />
+    </div>
+</div>
+<label class="check" style="margin-bottom: 20px; display: block;">
+    <input type="checkbox" name="is_exact_location" {% if property is none or property.is_exact_location %}checked{% endif %} /> 
+    Show exact location to guests
+</label>
+
+<hr class="hr"/>
+<h3>Contact Details & Pricing</h3>
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+    <div>
+        <label>Contact Name</label>
+        <input type="text" name="contact_name" class="input" value="{{ property.contact_name if property else '' }}" />
+    </div>
+    <div>
+        <label>Contact Phone</label>
+        <input type="text" name="contact_phone" class="input" value="{{ property.contact_phone if property else '' }}" />
+    </div>
+    <div>
+        <label>Contact Email</label>
+        <input type="email" name="contact_email" class="input" value="{{ property.contact_email if property else '' }}" />
+    </div>
+    <div>
+        <label>Base Price per Night (LYD)</label>
+        <input type="number" step="0.01" name="base_price_per_night" class="input" value="{{ property.base_price_per_night if property and property.base_price_per_night is not none else '' }}" />
+    </div>
+</div>
+
+<label>Amenities (comma-separated)</label>
+<input type="text" name="amenities" class="input" value="{{ property.amenities if property else '' }}" placeholder="Wifi, Pool, Kitchen..." />
+
+<hr class="hr"/>
+<div class="row-between" style="margin-bottom: 15px;">
+    <h3>Seasonal & Dynamic Pricing</h3>
+    <button type="button" class="btn btn-sm" onclick="addPriceRule()">+ Add Season</button>
+</div>
+
+<div id="price-rules-container">
+    {% if property and property.price_rules %}
+      {% for rule in property.price_rules %}
+        <div class="price-rule-row card section" style="margin-bottom:15px; background: var(--panel);">
+            <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div>
+                    <label class="small">Start Date</label>
+                    <input type="date" name="price_start_date[]" class="input" value="{{ rule.start_date }}">
+                </div>
+                <div>
+                    <label class="small">End Date</label>
+                    <input type="date" name="price_end_date[]" class="input" value="{{ rule.end_date }}">
+                </div>
+                <div>
+                    <label class="small">Price (LYD)</label>
+                    <input type="number" step="0.01" name="price_val[]" class="input" value="{{ rule.price_per_night }}">
+                </div>
+            </div>
+            <div style="margin-top:10px;">
+                <label class="small">Specific Weekday (Optional)</label>
+                <select name="price_weekday[]" class="input">
+                    <option value="">All Weekdays</option>
+                    {% for i in range(7) %}
+                    <option value="{{ i }}" {% if rule.weekday == i %}selected{% endif %}>
+                        {{ ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][i] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+</div>
+
+<hr class="hr"/>
+<h3>Listing Gallery</h3>
+<p class="muted small">Upload high-quality photos. The first image will be used as the cover.</p>
+
+<div id="photo-management-container" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+    {% if property and property.images %}
+        {% for img in property.images %}
+            <div class="card section" style="padding: 0; position: relative; overflow: hidden; background: var(--panel);">
+                <img src="/static/{{ img.file_path }}" style="width: 100%; height: 120px; object-fit: cover;">
+                <div style="padding: 8px; text-align: center;">
+                    <label class="check" style="color: var(--danger); font-size: 11px;">
+                        <input type="checkbox" name="delete_photo_ids[]" value="{{ img.id }}"> Delete
+                    </label>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div class="card section" style="background: var(--panel);">
+    <label>Upload New Photos</label>
+    <input type="file" name="new_photos" multiple class="input" accept="image/*">
+</div>
+
+
+<script>
+function addPriceRule() {
+    const container = document.getElementById('price-rules-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'price-rule-row card section';
+    newRow.style.marginBottom = '15px';
+    newRow.style.background = 'var(--panel)';
+    newRow.innerHTML = `
+        <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+            <div><label class="small">Start Date</label><input type="date" name="price_start_date[]" class="input"></div>
+            <div><label class="small">End Date</label><input type="date" name="price_end_date[]" class="input"></div>
+            <div><label class="small">Price (LYD)</label><input type="number" step="0.01" name="price_val[]" class="input"></div>
+        </div>
+        <div style="margin-top:10px;">
+            <label class="small">Specific Weekday (Optional)</label>
+            <select name="price_weekday[]" class="input">
+                <option value="">All Weekdays</option>
+                <option value="0">Monday</option><option value="1">Tuesday</option>
+                <option value="2">Wednesday</option><option value="3">Thursday</option>
+                <option value="4">Friday</option><option value="5">Saturday</option>
+                <option value="6">Sunday</option>
+            </select>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
+</script>

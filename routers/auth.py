@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from deps import get_db
+from deps import get_db, get_current_user
 from models import User, SiteRole
 from security import (
     get_password_hash,
@@ -78,13 +78,21 @@ def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
-    # Cookie-based "session" for HTML pages
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
+    # Set session cookie
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=user.username,
         httponly=True,
     )
+
+    # Decide where to send them AFTER cookie is set.
+    # (We can't easily branch after returning, so we use query params or JS redirect if needed,
+    # but a simpler approach: redirect to a small router that figures it out.)
+    # We'll instead redirect to /auth/post-login which then routes correctly:
+    response = RedirectResponse(url="/auth/post-login", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(SESSION_COOKIE_NAME, user.username, httponly=True)
     return response
 
 
@@ -96,6 +104,22 @@ def logout():
 
 
 # --- JWT-based login for API clients (Postman / SPA frontends etc.) ---
+
+@router.get("/post-login")
+def post_login_redirect(
+    current_user: User = Depends(get_current_user),
+):
+    # Standard user → account page
+    if current_user.site_role == SiteRole.standard:
+        return RedirectResponse(url="/account", status_code=status.HTTP_302_FOUND)
+
+    # Site owner / site admin → site admin dashboard
+    if current_user.site_role in {SiteRole.site_owner, SiteRole.site_admin}:
+        return RedirectResponse(url="/site-admin", status_code=status.HTTP_302_FOUND)
+
+    # Fallback (shouldn't really happen)
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
 
 
 @router.post("/token")

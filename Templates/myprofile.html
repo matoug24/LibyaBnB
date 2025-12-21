@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}My profile{% endblock %}
+{% block content %}
+<h1 class="page-title">My profile</h1>
+<div class="split">
+  <div class="panel">
+    <h2>Your details</h2>
+    <form method="post" action="/myprofile" class="form">
+      <label>Name</label><input type="text" name="full_name" value="{{ user.full_name or '' }}" />
+      <label>Phone</label><input type="text" name="phone" value="{{ user.phone or '' }}" />
+      <label>Email</label><input type="email" name="email" value="{{ user.email or '' }}" />
+      <label class="check"><input type="checkbox" name="whatsapp_enabled" {% if user.whatsapp_enabled %}checked{% endif %} /> Phone has WhatsApp</label>
+      <hr class="hr"/>
+      <label class="check"><input type="checkbox" name="is_supervisor" {% if user.is_supervisor %}checked{% endif %} /> Enable supervisor profile</label>
+      <label>Districts (comma-separated)</label><input type="text" name="supervisor_districts" value="{{ user.supervisor_districts or '' }}" />
+      <label>Services (comma-separated)</label><input type="text" name="supervisor_services" value="{{ user.supervisor_services or '' }}" />
+      <button class="btn" type="submit">Save</button>
+      {% if saved %}<p class="success">Saved.</p>{% endif %}
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Your bookings</h2>
+    <table class="table">
+      <thead><tr><th>Code</th><th>Dates</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for b in bookings %}
+          <tr>
+            <td><a href="/book/success/{{ b.booking_code }}">{{ b.booking_code }}</a></td>
+            <td>{{ b.start_date }} → {{ b.end_date }}</td>
+            <td>
+              <span class="badge badge-{{ b.status.value }}">{{ b.status.value }}</span>
+              {% if b.status.value in ['pending', 'confirmed'] %}
+                <form method="post" action="/my-booking/cancel" style="display:inline;" onsubmit="return confirm('Cancel booking?');">
+                  <input type="hidden" name="booking_code" value="{{ b.booking_code }}">
+                  <input type="hidden" name="phone" value="{{ b.guest_phone }}">
+                  <button type="submit" class="btn btn-sm btn-outline" style="padding: 2px 6px; font-size: 11px;">Cancel</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

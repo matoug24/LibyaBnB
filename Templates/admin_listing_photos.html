@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Manage Photos: {{ property.name }}</h1>
+
+<div class="panel card section" style="margin-bottom: 20px;">
+  <h3>Upload New Photos</h3>
+  <form method="post" action="/admin/listings/{{ property.id }}/photos" enctype="multipart/form-data">
+    <div class="grid" style="grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
+      <input type="file" name="files" multiple class="input" accept="image/*" required>
+      <button type="submit" class="btn">Upload</button>
+    </div>
+    <p class="muted small" style="margin-top: 10px;">Tip: The first photo uploaded is used as the cover image.</p>
+  </form>
+</div>
+
+<div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+  {% for img in images %}
+    <div class="card section" style="padding: 0; overflow: hidden;">
+      <img src="/static/{{ img.file_path }}" style="width: 100%; height: 150px; object-fit: cover; display: block;">
+      <div style="padding: 10px;">
+        <form method="post" action="/admin/listings/{{ property.id }}/photos/{{ img.id }}/delete">
+          <button type="submit" class="btn btn-sm btn-danger" style="width: 100%;" onclick="return confirm('Delete this photo?')">Delete</button>
+        </form>
+      </div>
+    </div>
+  {% else %}
+    <div class="panel" style="grid-column: 1 / -1; text-align: center;">
+      <p class="muted">No photos uploaded for this listing yet.</p>
+    </div>
+  {% endfor %}
+</div>
+
+<p style="margin-top: 20px;">
+  <a href="/admin/dashboard" class="muted">← Back to Dashboard</a>
+</p>
+{% endblock %}

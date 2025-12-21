@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Site admin{% endblock %}
+{% block content %}
+<div class="row-between">
+  <h1 class="page-title">Site dashboard</h1>
+  <a class="btn" href="/site_admin/listings/new">Create new listing</a>
+</div>
+<div class="panel">
+  <h2>All listings</h2>
+  <table class="table">
+    <thead><tr><th>ID</th><th>Name</th><th></th><th></th><th></th><th></th></tr></thead>
+    <tbody>
+      {% for p in properties %}
+        <tr>
+          <td>{{ p.id }}</td>
+          <td>{{ p.name }}</td>
+          <td><a class="btn btn-sm btn-outline" href="/listings/{{ p.id }}">View</a></td>
+          <td><a class="btn btn-sm" href="/site_admin/listings/{{ p.id }}/edit">Edit</a></td>
+          <td>
+            <a class="btn btn-sm btn-outline" href="/admin/listings/{{ p.id }}/photos">Photos</a>
+          </td>
+          <td><a class="btn btn-sm btn-outline" href="/site_admin/listings/{{ p.id }}/members">Members</a></td>
+          <td>
+            <form method="post" action="/site_admin/listings/{{ p.id }}/delete" onsubmit="return confirm('Delete listing?');">
+              <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="muted">No listings.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}My booking{% endblock %}
+{% block content %}
+<h1 class="page-title">My booking</h1>
+<div class="panel">
+  <form method="post" action="/my-booking" class="form">
+    <label>Booking code</label>
+    <input type="text" name="booking_code" required />
+    <label>Phone number</label>
+    <input type="text" name="phone" required />
+    <button class="btn" type="submit">Find booking</button>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Guest booking details{% endblock %}
+{% block content %}
+<h1 class="page-title">Booking request details</h1>
+<p class="muted">{{ property.name }} — {{ start }} → {{ end }}</p>
+<div class="panel">
+  <form method="post" action="/book/guest" class="form">
+    <input type="hidden" name="listing_id" value="{{ listing_id }}" />
+    <input type="hidden" name="start" value="{{ start }}" />
+    <input type="hidden" name="end" value="{{ end }}" />
+    <label>Your name</label>
+    <input type="text" name="guest_name" required />
+    <label>Email</label>
+    <input type="email" name="guest_email" required />
+    <label>Phone</label>
+    <input type="text" name="guest_phone" required />
+    <button class="btn" type="submit">Confirm booking</button>
+  </form>
+</div>
+{% endblock %}

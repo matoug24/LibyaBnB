@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+  <script src="/static/js/calendar.js"></script>
+{% endblock %}
+
+{% block content %}
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+    <div>
+      <h1 class="h1">{{ property.name }}</h1>
+      <div class="muted">
+        {{ (property.city or "") ~ (" • " if property.city and property.country else "") ~ (property.country or "") }}
+        {% if property.capacity %} • Sleeps {{ property.capacity }}{% endif %}
+        {% if property.property_type %} • {{ property.property_type }}{% endif %}
+      </div>
+    </div>
+    {% if property.base_price_per_night %}
+      <div class="card section" style="padding:10px 12px;">
+        <div style="font-weight:900;font-size:18px;">
+          {{ "%.0f"|format(property.base_price_per_night) }} LYD
+          <span class="muted" style="font-weight:700;font-size:13px;">/night</span>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% include "partials/photo_gallery.html" %}
+
+  <div class="listing-layout">
+    <div class="card section">
+      {% if property.short_description %}
+        <div style="font-size:16px;line-height:1.55;">{{ property.short_description }}</div>
+      {% endif %}
+
+      {% if property.amenities %}
+        <h3 style="margin:16px 0 8px;">Amenities</h3>
+        <div class="kv">
+          {% for a in property.amenities.split(",") %}
+            {% if a.strip() %}
+              <div class="item">{{ a.strip() }}</div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <h3 style="margin:18px 0 8px;">Availability</h3>
+      {% include "partials/calendar_two_months.html" %}
+
+      <h3 style="margin:18px 0 8px;">Location</h3>
+      <p class="muted" style="margin-top:0;">
+        {% if map_is_exact %}
+          Exact location shown.
+        {% else %}
+          Approximate location shown (privacy protected).
+        {% endif %}
+      </p>
+
+      {% if map_lat and map_lon %}
+        <div class="map-frame">
+          {% if google_maps_key %}
+            <!-- Official Embed API (recommended for production) -->
+            <iframe
+              width="100%" height="100%" style="border:0"
+              loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps/embed/v1/place?key={{ google_maps_key }}&q={{ map_lat }},{{ map_lon }}&zoom=15">
+            </iframe>
+          {% else %}
+            <!-- No-key fallback (fine for dev/testing; may be rate-limited by Google) -->
+            <iframe
+              width="100%" height="100%" style="border:0"
+              loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps?q={{ map_lat }},{{ map_lon }}&z=15&output=embed">
+            </iframe>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="card section" style="background:rgba(255,255,255,0.04);border:1px solid var(--line);">
+          <div class="muted">Map unavailable. Set listing coordinates.</div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card bookbox">
+      <h3 style="margin:0 0 8px;">Book</h3>
+      <p class="muted" style="margin-top:0;">Select dates on the calendar, then click Book.</p>
+
+      <form method="get" action="/book/start" id="bookForm">
+        <input type="hidden" name="property_id" value="{{ property.id }}"/>
+        <input type="hidden" name="start" id="startInput" value=""/>
+        <input type="hidden" name="end" id="endInput" value=""/>
+
+        <div class="row">
+          <div style="flex:1">
+            <div class="muted" style="font-size:12px;font-weight:900;">Check-in</div>
+            <input class="input" type="text" id="startDisplay" placeholder="Select" readonly>
+          </div>
+          <div style="flex:1">
+            <div class="muted" style="font-size:12px;font-weight:900;">Check-out</div>
+            <input class="input" type="text" id="endDisplay" placeholder="Select" readonly>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <button type="submit" class="btn" style="width:100%;">Book</button>
+        </div>
+
+        <div id="priceSummary" style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: var(--r12); display: none;">
+          <div style="display: flex; justify-content: space-between;">
+              <span class="muted">Total for <span id="nightCount">0</span> nights:</span>
+              <span style="font-weight: 900; color: var(--ok);"><span id="totalPrice">0</span> LYD</span>
+          </div>
+        </div>
+
+        <div class="muted" style="font-size:12px;margin-top:10px;">
+          Pending dates are shown in amber; booked dates in red.
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Gallery modal
+    (function(){
+      const btn = document.getElementById("viewAllPhotosBtn");
+      const modal = document.getElementById("photoModal");
+      const close = document.getElementById("photoModalClose");
+      if (btn && modal) {
+        btn.addEventListener("click", () => modal.classList.add("open"));
+      }
+      if (close && modal) {
+        close.addEventListener("click", () => modal.classList.remove("open"));
+      }
+      if (modal) {
+        modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
+      }
+    })();
+  </script>
+{% endblock %}

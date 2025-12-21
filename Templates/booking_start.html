@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Continue booking{% endblock %}
+{% block content %}
+<h1 class="page-title">Continue your booking</h1>
+<p>You selected: <strong>{{ start }}</strong> to <strong>{{ end }}</strong></p>
+<div class="panel">
+  <div class="actions">
+    <a class="btn btn-outline" href="/login?next=/book/guest?listing_id={{ listing_id }}%26start={{ start }}%26end={{ end }}">Login</a>
+    <a class="btn btn-outline" href="/signup">Sign up</a>
+    <a class="btn" href="/book/guest?listing_id={{ listing_id }}&start={{ start }}&end={{ end }}">Continue as guest</a>
+  </div>
+</div>
+<p class="small"><a href="/listings/{{ listing_id }}">← Back to listing</a></p>
+{% endblock %}

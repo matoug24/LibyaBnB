@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Manage members{% endblock %}
+{% block content %}
+<h1 class="page-title">Members: {{ property.name }}</h1>
+
+<div class="panel">
+  <form method="post" action="/site_admin/listings/{{ property.id }}/members" class="form">
+    <h3>Owner</h3>
+    <label>Owner username</label>
+    <input type="text" name="owner_username" value="{{ owner_username }}" />
+    <label class="check"><input type="checkbox" name="owner_create_if_missing" /> Create owner if missing (password Libya123)</label>
+
+    <hr class="hr"/>
+
+    <h3>Admins</h3>
+    <label>Admin usernames (comma-separated)</label>
+    <input type="text" name="admin_usernames" value="{{ admin_usernames }}" />
+    <label class="check"><input type="checkbox" name="admins_create_if_missing" /> Create missing admins (password Libya123)</label>
+
+    <hr class="hr"/>
+
+    <h3>Supervisors for this listing</h3>
+    <p class="muted small">These users will appear on the supervisor profile “Agent listings”. Supervisor membership does not grant admin dashboard access.</p>
+    <label>Supervisor usernames (comma-separated)</label>
+    <input type="text" name="supervisor_usernames" value="{{ supervisor_usernames }}" />
+    <label class="check"><input type="checkbox" name="supervisors_create_if_missing" /> Create missing supervisors (password Libya123)</label>
+
+    <button class="btn" type="submit">Save members</button>
+  </form>
+</div>
+
+<p class="small"><a href="/site_admin/dashboard">← Back</a></p>
+{% endblock %}

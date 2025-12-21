@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}My Account{% endblock %}
+
+{% block content %}
+<h2>My Account</h2>
+
+<div class="account-layout">
+    <form action="/account" method="post" class="panel panel-narrow">
+        <h3>Basic info</h3>
+
+        <label for="full_name">Full name</label>
+        <input id="full_name" type="text" name="full_name" value="{{ user.full_name or '' }}">
+
+        <label for="phone">Phone</label>
+        <input id="phone" type="text" name="phone" value="{{ user.phone or '' }}">
+
+        <label class="checkbox">
+            <input type="checkbox" name="is_supervisor" {% if user.is_supervisor %}checked{% endif %}>
+            Available as supervisor
+        </label>
+
+        <button class="btn" type="submit">Save changes</button>
+
+        {% if saved %}
+            <p class="form-success">Profile updated.</p>
+        {% endif %}
+    </form>
+
+    <div class="panel">
+        <h3>My bookings</h3>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Code</th>
+                <th>Property</th>
+                <th>Dates</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for b in bookings %}
+                <tr>
+                    <td>{{ b.booking_code }}</td>
+                    <td>
+                        {% if b.property %}
+                            <a href="/properties/{{ b.property.id }}/detail/html">{{ b.property.name }}</a>
+                        {% else %}
+                            (deleted)
+                        {% endif %}
+                    </td>
+                    <td>{{ b.start_date }} → {{ b.end_date }}</td>
+                    <td>
+                        <span class="badge status-{{ b.status.value }}">{{ b.status.value|capitalize }}</span>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4" class="muted">No bookings yet.</td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
