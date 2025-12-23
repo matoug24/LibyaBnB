@@ -5,12 +5,19 @@
     </div>
     <div>
         <label>Property Type</label>
-        <input type="text" name="property_type" class="input" value="{{ property.property_type if property else '' }}" placeholder="e.g. Apartment, Villa" />
+        <select name="property_type" class="input">
+            <option value="Villa" {% if property and property.property_type == 'Villa' %}selected{% endif %}>Villa</option>
+            <option value="Cottage" {% if property and property.property_type == 'Cottage' %}selected{% endif %}>Cottage</option>
+            <option value="Cottage on the beach" {% if property and property.property_type == 'Cottage on the beach' %}selected{% endif %}>Cottage on the beach</option>
+        </select>
     </div>
 </div>
 
 <label>Short Description</label>
 <textarea name="short_description" class="input" rows="3" placeholder="Describe your property...">{{ property.short_description if property else '' }}</textarea>
+
+<label>Highlights</label>
+<textarea name="highlights" class="input" rows="2" placeholder="Summary to emphasize listing quality...">{{ property.highlights if property else '' }}</textarea>
 
 <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px;">
     <div>
@@ -18,8 +25,8 @@
         <input type="text" name="city" class="input" value="{{ property.city if property else '' }}" />
     </div>
     <div>
-        <label>Country</label>
-        <input type="text" name="country" class="input" value="{{ property.country if property else '' }}" />
+        <label>District</label>
+        <input type="text" name="district" class="input" value="{{ property.district if property else '' }}" />
     </div>
     <div>
         <label>Capacity (Guests)</label>
@@ -46,28 +53,33 @@
 </label>
 
 <hr class="hr"/>
-<h3>Contact Details & Pricing</h3>
+<h3>Pricing & Policy</h3>
 <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
-    <div>
-        <label>Contact Name</label>
-        <input type="text" name="contact_name" class="input" value="{{ property.contact_name if property else '' }}" />
-    </div>
-    <div>
-        <label>Contact Phone</label>
-        <input type="text" name="contact_phone" class="input" value="{{ property.contact_phone if property else '' }}" />
-    </div>
-    <div>
-        <label>Contact Email</label>
-        <input type="email" name="contact_email" class="input" value="{{ property.contact_email if property else '' }}" />
-    </div>
     <div>
         <label>Base Price per Night (LYD)</label>
         <input type="number" step="0.01" name="base_price_per_night" class="input" value="{{ property.base_price_per_night if property and property.base_price_per_night is not none else '' }}" />
     </div>
+    <div>
+        <label>Social Media Link</label>
+        <input type="text" name="social_link" class="input" value="{{ property.social_link if property else '' }}" placeholder="https://..." />
+    </div>
 </div>
 
-<label>Amenities (comma-separated)</label>
-<input type="text" name="amenities" class="input" value="{{ property.amenities if property else '' }}" placeholder="Wifi, Pool, Kitchen..." />
+<label>Cancellation Policy</label>
+<input type="text" name="cancellation_policy" class="input" value="{{ property.cancellation_policy if property else '' }}" placeholder="Statement regarding cancellations..." />
+
+<label>Property Rules (One per line)</label>
+<textarea name="property_rules" class="input" rows="3" placeholder="Bullet points for rules...">{{ property.property_rules if property else '' }}</textarea>
+
+<label>Amenities</label>
+<div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px;">
+    {% set current_amenities = property.amenities.split(',') if property and property.amenities else [] %}
+    <label class="check"><input type="checkbox" name="amenities_check[]" value="Wifi" {% if 'Wifi' in current_amenities %}checked{% endif %}> Wifi</label>
+    <label class="check"><input type="checkbox" name="amenities_check[]" value="AC" {% if 'AC' in current_amenities %}checked{% endif %}> AC</label>
+    <label class="check"><input type="checkbox" name="amenities_check[]" value="Pool" {% if 'Pool' in current_amenities %}checked{% endif %}> Pool</label>
+    <label class="check"><input type="checkbox" name="amenities_check[]" value="Garage" {% if 'Garage' in current_amenities %}checked{% endif %}> Garage</label>
+</div>
+<input type="text" name="amenities_extra" class="input" placeholder="Additional amenities (comma-separated)..." />
 
 <hr class="hr"/>
 <div class="row-between" style="margin-bottom: 15px;">
@@ -132,7 +144,6 @@
     <label>Upload New Photos</label>
     <input type="file" name="new_photos" multiple class="input" accept="image/*">
 </div>
-
 
 <script>
 function addPriceRule() {

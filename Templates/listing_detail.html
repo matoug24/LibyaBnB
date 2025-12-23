@@ -1,15 +1,11 @@
 {% extends "base.html" %}
 
-{% block scripts %}
-  <script src="/static/js/calendar.js"></script>
-{% endblock %}
-
 {% block content %}
   <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
     <div>
       <h1 class="h1">{{ property.name }}</h1>
       <div class="muted">
-        {{ (property.city or "") ~ (" • " if property.city and property.country else "") ~ (property.country or "") }}
+        {{ (property.city or "") ~ (" • " if property.city and property.district else "") ~ (property.district or "") }}
         {% if property.capacity %} • Sleeps {{ property.capacity }}{% endif %}
         {% if property.property_type %} • {{ property.property_type }}{% endif %}
       </div>
@@ -28,8 +24,16 @@
 
   <div class="listing-layout">
     <div class="card section">
+      
+      {% if property.highlights %}
+        <div class="card section" style="margin-bottom: 20px; border-left: 4px solid var(--accent); background: rgba(79,124,255,0.05);">
+            <h3 style="margin: 0 0 8px;">Highlights</h3>
+            <div style="font-size:16px; line-height:1.5;">{{ property.highlights }}</div>
+        </div>
+      {% endif %}
+
       {% if property.short_description %}
-        <div style="font-size:16px;line-height:1.55;">{{ property.short_description }}</div>
+        <div style="font-size:16px;line-height:1.55; margin-bottom: 20px;">{{ property.short_description }}</div>
       {% endif %}
 
       {% if property.amenities %}
@@ -43,8 +47,36 @@
         </div>
       {% endif %}
 
+      {% if property.property_rules %}
+        <h3 style="margin:18px 0 8px;">Property Rules</h3>
+        <ul style="padding-left: 20px; line-height: 1.6;">
+            {% for rule in property.property_rules.split('\n') %}
+                {% if rule.strip() %}<li>{{ rule.strip() }}</li>{% endif %}
+            {% endfor %}
+        </ul>
+      {% endif %}
+
       <h3 style="margin:18px 0 8px;">Availability</h3>
-      {% include "partials/calendar_two_months.html" %}
+      
+      <div id="calendar-root" 
+           data-status-map='{{ status_map | tojson }}'
+           data-price-rules='{{ price_rules | tojson }}'
+           data-base-price='{{ property.base_price_per_night }}'>
+        
+        <div class="cal-head" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <button type="button" class="btn btn-sm" onclick="changeMonth(-1)">← Previous</button>
+          <div id="month-labels" style="font-weight: 800; color: var(--text);"></div>
+          <button type="button" class="btn btn-sm" onclick="changeMonth(1)">Next →</button>
+        </div>
+
+        <div class="cal-wrap" id="cal-container"></div>
+
+        <div class="legend" style="margin-top: 20px;">
+          <div class="badge"><span class="dot avail"></span> Available</div>
+          <div class="badge"><span class="dot pending"></span> Pending</div>
+          <div class="badge"><span class="dot booked"></span> Booked</div>
+        </div>
+      </div>
 
       <h3 style="margin:18px 0 8px;">Location</h3>
       <p class="muted" style="margin-top:0;">
@@ -57,27 +89,62 @@
 
       {% if map_lat and map_lon %}
         <div class="map-frame">
-          {% if google_maps_key %}
-            <!-- Official Embed API (recommended for production) -->
-            <iframe
-              width="100%" height="100%" style="border:0"
-              loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-              src="https://www.google.com/maps/embed/v1/place?key={{ google_maps_key }}&q={{ map_lat }},{{ map_lon }}&zoom=15">
-            </iframe>
-          {% else %}
-            <!-- No-key fallback (fine for dev/testing; may be rate-limited by Google) -->
-            <iframe
-              width="100%" height="100%" style="border:0"
-              loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-              src="https://www.google.com/maps?q={{ map_lat }},{{ map_lon }}&z=15&output=embed">
-            </iframe>
-          {% endif %}
+          <iframe
+            width="100%" height="100%" style="border:0"
+            loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            src="https://maps.google.com/maps?q={{ map_lat }},{{ map_lon }}&z=15&output=embed">
+          </iframe>
         </div>
       {% else %}
         <div class="card section" style="background:rgba(255,255,255,0.04);border:1px solid var(--line);">
           <div class="muted">Map unavailable. Set listing coordinates.</div>
         </div>
       {% endif %}
+
+      <h3 style="margin:25px 0 8px;">Contact us</h3>
+      <div class="panel card section" style="background: rgba(255,255,255,0.02);">
+          <p class="muted small" style="margin-top:0;">Managed by:</p>
+          {% for member in property.members %}
+              <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                      <div style="font-weight: 800;">{{ member.user.full_name or member.user.username }}</div>
+                      <div class="muted small">{{ member.role.value | capitalize }}</div>
+                  </div>
+                  <div style="text-align: right;">
+                      <div style="font-size: 14px;">{{ member.user.phone or 'No phone provided' }}</div>
+                      {% if member.user.whatsapp_enabled %}<span style="color:var(--ok); font-size: 11px;">(WhatsApp Available)</span>{% endif %}
+                  </div>
+              </div>
+          {% endfor %}
+          
+          {% if property.social_link %}
+            <div style="margin-top: 15px; text-align: center;">
+                <a href="{{ property.social_link }}" target="_blank" class="btn" style="width: 100%;">Visit our Social Media</a>
+            </div>
+          {% endif %}
+      </div>
+
+      <h3 style="margin:25px 0 8px;">Guest Reviews</h3>
+      <div class="panel">
+          {% for review in property.reviews %}
+              <div style="border-bottom: 1px solid var(--line); padding: 15px 0;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                      <span style="font-weight: 800;">{{ review.user.full_name or review.user.username }}</span>
+                      <span style="color: var(--warn);">
+                          {% for i in range(review.rating) %}★{% endfor %}
+                      </span>
+                  </div>
+                  <p style="margin: 0; font-size: 14px; line-height: 1.4;">{{ review.comment }}</p>
+                  <div class="muted small" style="margin-top: 8px;">{{ review.created_at.strftime('%B %Y') }}</div>
+              </div>
+          {% else %}
+              <p class="muted">No reviews yet for this property.</p>
+          {% endfor %}
+      </div>
+
+      <div class="muted small" style="margin-top: 40px; border-top: 1px solid var(--line); padding-top: 15px;">
+          <strong>Cancellation Policy:</strong> {{ property.cancellation_policy or 'Please contact the manager for details regarding the cancellation policy for this listing.' }}
+      </div>
     </div>
 
     <div class="card bookbox">
@@ -100,10 +167,6 @@
           </div>
         </div>
 
-        <div style="margin-top:10px;">
-          <button type="submit" class="btn" style="width:100%;">Book</button>
-        </div>
-
         <div id="priceSummary" style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: var(--r12); display: none;">
           <div style="display: flex; justify-content: space-between;">
               <span class="muted">Total for <span id="nightCount">0</span> nights:</span>
@@ -111,28 +174,149 @@
           </div>
         </div>
 
-        <div class="muted" style="font-size:12px;margin-top:10px;">
-          Pending dates are shown in amber; booked dates in red.
+        <div style="margin-top:15px;">
+          <button type="submit" class="btn" style="width:100%;">Book Now</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    // Gallery modal
     (function(){
-      const btn = document.getElementById("viewAllPhotosBtn");
-      const modal = document.getElementById("photoModal");
-      const close = document.getElementById("photoModalClose");
-      if (btn && modal) {
-        btn.addEventListener("click", () => modal.classList.add("open"));
-      }
-      if (close && modal) {
-        close.addEventListener("click", () => modal.classList.remove("open"));
-      }
-      if (modal) {
-        modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
-      }
+        let currentAnchorDate = new Date();
+        currentAnchorDate.setDate(1);
+
+        let start = null, end = null;
+
+        function parseISO(s) { return new Date(s + "T00:00:00"); }
+
+        function renderCalendar() {
+            const root = document.getElementById('calendar-root');
+            if (!root) return;
+
+            const statusMap = JSON.parse(root.dataset.statusMap || '{}');
+            const container = document.getElementById('cal-container');
+            const labelEl = document.getElementById('month-labels');
+            
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 2; i++) {
+                let viewDate = new Date(currentAnchorDate);
+                viewDate.setMonth(viewDate.getMonth() + i);
+                
+                container.innerHTML += generateMonthTable(viewDate, statusMap);
+                
+                const monthName = viewDate.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+                if (i === 0) labelEl.innerText = monthName;
+                if (i === 1) labelEl.innerText += " - " + monthName;
+            }
+            setupSelectionLogic();
+        }
+
+        function generateMonthTable(date, statusMap) {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const startOffset = (firstDay + 6) % 7; 
+            
+            let html = `<div class="card cal"><table class="cal-table">
+                        <thead><tr><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th><th>S</th></tr></thead><tbody><tr>`;
+            
+            for (let i = 0; i < startOffset; i++) html += '<td><div class="day disabled"></div></td>';
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const status = statusMap[dateStr] || 'available';
+                html += `<td><div class="day ${status}" data-date="${dateStr}">${day}</div></td>`;
+                if ((day + startOffset) % 7 === 0) html += '</tr><tr>';
+            }
+            
+            html += '</tr></tbody></table></div>';
+            return html;
+        }
+
+        window.changeMonth = function(offset) {
+            currentAnchorDate.setMonth(currentAnchorDate.getMonth() + offset);
+            renderCalendar();
+        };
+
+        function setupSelectionLogic() {
+            document.querySelectorAll('.day:not(.disabled):not(.booked)').forEach(el => {
+                el.onclick = () => {
+                    const clicked = el.dataset.date;
+                    if (!start || (start && end)) {
+                        start = clicked; end = null;
+                    } else {
+                        if (parseISO(clicked) <= parseISO(start)) {
+                            start = clicked; end = null;
+                        } else {
+                            end = clicked;
+                        }
+                    }
+                    updateUI();
+                };
+            });
+            updateUI();
+        }
+
+        function updateUI() {
+            const root = document.getElementById('calendar-root');
+            const priceRules = JSON.parse(root.dataset.priceRules || '[]');
+            const basePrice = parseFloat(root.dataset.basePrice || '0');
+
+            document.querySelectorAll('.day').forEach(el => {
+                el.classList.remove('selected');
+                const cellDate = el.dataset.date;
+                if (cellDate) {
+                    if (start && end) {
+                        const d = parseISO(cellDate);
+                        if (d >= parseISO(start) && d < parseISO(end)) el.classList.add('selected');
+                    } else if (start === cellDate) {
+                        el.classList.add('selected');
+                    }
+                }
+            });
+
+            document.getElementById('startInput').value = start || '';
+            document.getElementById('endInput').value = end || '';
+            document.getElementById('startDisplay').value = start || 'Select';
+            document.getElementById('endDisplay').value = end || 'Select';
+
+            const summary = document.getElementById('priceSummary');
+            if (start && end) {
+                let total = 0, nights = 0;
+                let curr = parseISO(start);
+                let stop = parseISO(end);
+                while (curr < stop) {
+                    let dayPrice = basePrice;
+                    let dayIso = curr.toISOString().slice(0, 10);
+                    let dayOfWeek = (curr.getDay() + 6) % 7;
+                    let rule = priceRules.find(r => {
+                        return (!r.start_date || dayIso >= r.start_date) && 
+                               (!r.end_date || dayIso <= r.end_date) &&
+                               (r.weekday === null || r.weekday === dayOfWeek);
+                    });
+                    if (rule) dayPrice = rule.price_per_night;
+                    total += dayPrice; nights++;
+                    curr.setDate(curr.getDate() + 1);
+                }
+                document.getElementById('nightCount').innerText = nights;
+                document.getElementById('totalPrice').innerText = total.toFixed(0);
+                summary.style.display = 'block';
+            } else {
+                summary.style.display = 'none';
+            }
+        }
+
+        const galleryBtn = document.getElementById("viewAllPhotosBtn");
+        const modal = document.getElementById("photoModal");
+        const modalClose = document.getElementById("photoModalClose");
+        if (galleryBtn && modal) galleryBtn.addEventListener("click", () => modal.classList.add("open"));
+        if (modalClose && modal) modalClose.addEventListener("click", () => modal.classList.remove("open"));
+        if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
+
+        document.addEventListener("DOMContentLoaded", renderCalendar);
     })();
   </script>
 {% endblock %}

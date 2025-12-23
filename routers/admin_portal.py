@@ -105,7 +105,7 @@ def dashboard(
 @router.post("/bookings/{booking_id}/approve")
 def approve(booking_id: int, db: Session = Depends(get_db), user: User = Depends(require_property_admin_or_owner)):
     b = db.query(Booking).filter(Booking.id == booking_id).first()
-    if not b or not property_accessible_to_admin(db, user, b.property_id):
+    if not b or not property_accessible_to_admin(b.property_id, db, user):
         raise HTTPException(status_code=403, detail="Not allowed")
     b.status = BookingStatus.confirmed
     db.commit()
@@ -115,7 +115,7 @@ def approve(booking_id: int, db: Session = Depends(get_db), user: User = Depends
 @router.post("/bookings/{booking_id}/deny")
 def deny(booking_id: int, db: Session = Depends(get_db), user: User = Depends(require_property_admin_or_owner)):
     b = db.query(Booking).filter(Booking.id == booking_id).first()
-    if not b or not property_accessible_to_admin(db, user, b.property_id):
+    if not b or not property_accessible_to_admin(b.property_id, db, user):
         raise HTTPException(status_code=403, detail="Not allowed")
     b.status = BookingStatus.denied
     db.commit()
@@ -125,7 +125,7 @@ def deny(booking_id: int, db: Session = Depends(get_db), user: User = Depends(re
 @router.get("/listings/{property_id}/edit", response_class=HTMLResponse)
 def edit_listing_form(property_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(require_property_admin_or_owner)):
     prop = db.query(Property).filter(Property.id == property_id).first()
-    if not prop or not property_accessible_to_admin(db, user, property_id):
+    if not prop or not property_accessible_to_admin(property_id, db, user):
         raise HTTPException(status_code=403, detail="Not allowed")
     return templates.TemplateResponse("site_listing_form.html", {"request": request, "user": user, "mode": "edit_admin", "property": prop})
 
@@ -135,20 +135,22 @@ async def edit_listing_submit(
     property_id: int,
     request: Request,
     name: str = Form(...),
+    property_type: str = Form(...),
     short_description: str = Form(""),
-    address_line: str = Form(""),
+    highlights: str = Form(""),
     city: str = Form(""),
-    country: str = Form(""),
+    district: str = Form(""),
+    address_line: str = Form(""),
     latitude: str = Form(""),
     longitude: str = Form(""),
     is_exact_location: Optional[str] = Form(None),
-    contact_name: str = Form(""),
-    contact_phone: str = Form(""),
-    contact_email: str = Form(""),
     base_price_per_night: str = Form(""),
-    amenities: str = Form(""),
+    social_link: str = Form(""),
+    cancellation_policy: str = Form(""),
+    property_rules: str = Form(""),
+    amenities_check: list[str] = Form([], alias="amenities_check[]"),
+    amenities_extra: str = Form(""),
     capacity: str = Form(""),
-    property_type: str = Form(""),
     delete_photo_ids: list[int] = Form([]),
     new_photos: list[UploadFile] = File([]),
     price_start_date: list[str] = Form([], alias="price_start_date[]"),
@@ -159,25 +161,36 @@ async def edit_listing_submit(
     user: User = Depends(require_property_admin_or_owner),
 ):
     prop = db.query(Property).filter(Property.id == property_id).first()
-    if not prop or not property_accessible_to_admin(db, user, property_id):
+    if not prop or not property_accessible_to_admin(property_id, db, user):
         raise HTTPException(status_code=403, detail="Not allowed")
 
+    # Basic Info
     prop.name = name
+    prop.property_type = property_type
     prop.short_description = short_description or None
-    prop.address_line = address_line or None
+    prop.highlights = highlights or None
     prop.city = city or None
-    prop.country = country or None
+    prop.district = district or None
+    prop.address_line = address_line or None
     prop.latitude = float(latitude) if latitude else None
     prop.longitude = float(longitude) if longitude else None
     prop.is_exact_location = True if is_exact_location else False
-    prop.contact_name = contact_name or None
-    prop.contact_phone = contact_phone or None
-    prop.contact_email = contact_email or None
     prop.base_price_per_night = float(base_price_per_night) if base_price_per_night else None
-    prop.amenities = amenities or None
     prop.capacity = int(capacity) if capacity else None
-    prop.property_type = property_type or None
+    
+    # New Policy & Social fields
+    prop.social_link = social_link or None
+    prop.cancellation_policy = cancellation_policy or None
+    prop.property_rules = property_rules or None
 
+    # Process Amenities: Checkboxes + Extra Text
+    final_amenities = [a for a in amenities_check if a.strip()]
+    if amenities_extra:
+        extra_list = [a.strip() for a in amenities_extra.split(",") if a.strip()]
+        final_amenities.extend(extra_list)
+    prop.amenities = ",".join(final_amenities) if final_amenities else None
+
+    # Handle Photo Deletion
     if delete_photo_ids:
         to_delete = db.query(PropertyImage).filter(PropertyImage.id.in_(delete_photo_ids), PropertyImage.property_id == property_id).all()
         for img in to_delete:
@@ -187,6 +200,7 @@ async def edit_listing_submit(
             except Exception: pass
             db.delete(img)
 
+    # Handle New Photo Uploads
     if new_photos:
         upload_dir = _ensure_upload_dir(property_id)
         for f in new_photos:
@@ -204,6 +218,7 @@ async def edit_listing_submit(
             rel_path = f"uploads/properties/{property_id}/{dest.name}"
             db.add(PropertyImage(property_id=property_id, file_path=rel_path))
 
+    # Update Pricing Rules
     db.query(PriceRule).filter(PriceRule.property_id == property_id).delete()
     for i in range(len(price_start_date)):
         start, end, val = price_start_date[i], price_end_date[i], price_val[i]
@@ -231,7 +246,7 @@ def _ensure_upload_dir(property_id: int) -> Path:
 @router.get("/listings/{property_id}/photos", response_class=HTMLResponse)
 def listing_photos_page(property_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(require_property_admin_or_owner)):
     prop = db.query(Property).filter(Property.id == property_id).first()
-    if not prop or not property_accessible_to_admin(db, user, property_id):
+    if not prop or not property_accessible_to_admin(property_id, db, user):
         raise HTTPException(status_code=403, detail="Not allowed")
     images = db.query(PropertyImage).filter(PropertyImage.property_id == property_id).order_by(PropertyImage.id.asc()).all()
     return templates.TemplateResponse("admin_listing_photos.html", {"request": request, "user": user, "property": prop, "images": images})
@@ -239,7 +254,7 @@ def listing_photos_page(property_id: int, request: Request, db: Session = Depend
 
 @router.post("/listings/{property_id}/photos")
 async def upload_listing_photos(property_id: int, request: Request, files: list[UploadFile] = File(...), db: Session = Depends(get_db), user: User = Depends(require_property_admin_or_owner)):
-    if not property_accessible_to_admin(db, user, property_id):
+    if not property_accessible_to_admin(property_id, db, user):
         raise HTTPException(status_code=403, detail="Not allowed")
     upload_dir = _ensure_upload_dir(property_id)
     for f in files:
@@ -254,7 +269,7 @@ async def upload_listing_photos(property_id: int, request: Request, files: list[
 
 @router.post("/listings/{property_id}/photos/{photo_id}/delete")
 def delete_listing_photo(property_id: int, photo_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(require_property_admin_or_owner)):
-    if not property_accessible_to_admin(db, user, property_id):
+    if not property_accessible_to_admin(property_id, db, user):
         raise HTTPException(status_code=403, detail="Not allowed")
     img = db.query(PropertyImage).filter(PropertyImage.id == photo_id, PropertyImage.property_id == property_id).first()
     if img:

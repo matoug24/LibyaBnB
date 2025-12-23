@@ -97,7 +97,7 @@ class Property(Base):
 
     address_line = Column(String(255), nullable=True)
     city = Column(String(120), nullable=True)
-    country = Column(String(120), nullable=True, default="Libya")
+    district = Column(String(120), nullable=True)
 
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
@@ -106,6 +106,12 @@ class Property(Base):
     contact_name = Column(String(120), nullable=True)
     contact_phone = Column(String(50), nullable=True)
     contact_email = Column(String(255), nullable=True)
+
+    # New Fields
+    social_link = Column(String(500), nullable=True)
+    highlights = Column(Text, nullable=True)
+    cancellation_policy = Column(Text, nullable=True)
+    property_rules = Column(Text, nullable=True) # Stored as newline or comma separated
 
     # Airbnb-like listing fields
     amenities = Column(Text, nullable=True)   # comma-separated

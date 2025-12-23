@@ -102,20 +102,22 @@ def _parse_usernames(raw: str) -> List[str]:
 async def create_listing(
     request: Request,
     name: str = Form(...),
+    property_type: str = Form(...),
     short_description: str = Form(""),
-    address_line: str = Form(""),
+    highlights: str = Form(""),
     city: str = Form(""),
-    country: str = Form(""),
+    district: str = Form(""),
+    address_line: str = Form(""),
     latitude: str = Form(""),
     longitude: str = Form(""),
     is_exact_location: Optional[str] = Form(None),
-    contact_name: str = Form(""),
-    contact_phone: str = Form(""),
-    contact_email: str = Form(""),
     base_price_per_night: str = Form(""),
-    amenities: str = Form(""),
+    social_link: str = Form(""),
+    cancellation_policy: str = Form(""),
+    property_rules: str = Form(""),
+    amenities_check: list[str] = Form([], alias="amenities_check[]"),
+    amenities_extra: str = Form(""),
     capacity: str = Form(""),
-    property_type: str = Form(""),
     owner_username: str = Form(...),
     owner_create_if_missing: Optional[str] = Form(None),
     admin_usernames: str = Form(""),
@@ -128,27 +130,34 @@ async def create_listing(
     db: Session = Depends(get_db),
     user: User = Depends(require_site_admin_or_owner),
 ):
+    # Process Amenities
+    final_amenities = [a for a in amenities_check if a.strip()]
+    if amenities_extra:
+        final_amenities.extend([a.strip() for a in amenities_extra.split(",") if a.strip()])
+
     prop = Property(
         name=name,
+        property_type=property_type,
         short_description=short_description or None,
+        highlights=highlights or None,
         address_line=address_line or None,
         city=city or None,
-        country=country or None,
+        district=district or None,
         latitude=float(latitude) if latitude else None,
         longitude=float(longitude) if longitude else None,
         is_exact_location=True if is_exact_location else False,
-        contact_name=contact_name or None,
-        contact_phone=contact_phone or None,
-        contact_email=contact_email or None,
         base_price_per_night=float(base_price_per_night) if base_price_per_night else None,
-        amenities=amenities or None,
+        amenities=",".join(final_amenities) if final_amenities else None,
         capacity=int(capacity) if capacity else None,
-        property_type=property_type or None,
+        social_link=social_link or None,
+        cancellation_policy=cancellation_policy or None,
+        property_rules=property_rules or None
     )
     db.add(prop)
     db.commit()
     db.refresh(prop)
 
+    # Ownership Assignment
     owner = db.query(User).filter(User.username == owner_username).first()
     if not owner:
         if owner_create_if_missing:
@@ -157,6 +166,7 @@ async def create_listing(
             raise HTTPException(status_code=400, detail="Owner user does not exist.")
     db.add(PropertyMember(user_id=owner.id, property_id=prop.id, role=PropertyRole.owner))
 
+    # Admin Assignment
     for uname in _parse_usernames(admin_usernames):
         admin = db.query(User).filter(User.username == uname).first()
         if not admin and admins_create_if_missing:
@@ -164,6 +174,7 @@ async def create_listing(
         if admin:
             db.add(PropertyMember(user_id=admin.id, property_id=prop.id, role=PropertyRole.admin))
 
+    # Pricing Rules
     for i in range(len(price_start_date)):
         start = price_start_date[i]
         end = price_end_date[i]
@@ -181,6 +192,7 @@ async def create_listing(
         )
         db.add(rule)
 
+    # Photos
     if new_photos:
         from routers.admin_portal import _ensure_upload_dir
         upload_dir = _ensure_upload_dir(prop.id)
@@ -215,20 +227,22 @@ async def edit_listing_submit(
     property_id: int,
     request: Request,
     name: str = Form(...),
+    property_type: str = Form(...),
     short_description: str = Form(""),
-    address_line: str = Form(""),
+    highlights: str = Form(""),
     city: str = Form(""),
-    country: str = Form(""),
+    district: str = Form(""),
+    address_line: str = Form(""),
     latitude: str = Form(""),
     longitude: str = Form(""),
     is_exact_location: Optional[str] = Form(None),
-    contact_name: str = Form(""),
-    contact_phone: str = Form(""),
-    contact_email: str = Form(""),
     base_price_per_night: str = Form(""),
-    amenities: str = Form(""),
+    social_link: str = Form(""),
+    cancellation_policy: str = Form(""),
+    property_rules: str = Form(""),
+    amenities_check: list[str] = Form([], alias="amenities_check[]"),
+    amenities_extra: str = Form(""),
     capacity: str = Form(""),
-    property_type: str = Form(""),
     delete_photo_ids: list[int] = Form([]),
     new_photos: list[UploadFile] = File([]),
     price_start_date: list[str] = Form([], alias="price_start_date[]"),
@@ -242,22 +256,32 @@ async def edit_listing_submit(
     if not prop:
         raise HTTPException(status_code=404, detail="Listing not found")
 
+    # Update Core Fields
     prop.name = name
+    prop.property_type = property_type
     prop.short_description = short_description or None
+    prop.highlights = highlights or None
     prop.address_line = address_line or None
     prop.city = city or None
-    prop.country = country or None
+    prop.district = district or None
     prop.latitude = float(latitude) if latitude else None
     prop.longitude = float(longitude) if longitude else None
     prop.is_exact_location = True if is_exact_location else False
-    prop.contact_name = contact_name or None
-    prop.contact_phone = contact_phone or None
-    prop.contact_email = contact_email or None
     prop.base_price_per_night = float(base_price_per_night) if base_price_per_night else None
-    prop.amenities = amenities or None
     prop.capacity = int(capacity) if capacity else None
-    prop.property_type = property_type or None
+    
+    # Update Policy & Social fields
+    prop.social_link = social_link or None
+    prop.cancellation_policy = cancellation_policy or None
+    prop.property_rules = property_rules or None
 
+    # Amenities Processing
+    final_amenities = [a for a in amenities_check if a.strip()]
+    if amenities_extra:
+        final_amenities.extend([a.strip() for a in amenities_extra.split(",") if a.strip()])
+    prop.amenities = ",".join(final_amenities) if final_amenities else None
+
+    # Photo Deletion
     if delete_photo_ids:
         to_delete = db.query(PropertyImage).filter(PropertyImage.id.in_(delete_photo_ids), PropertyImage.property_id == property_id).all()
         for img in to_delete:
@@ -267,6 +291,7 @@ async def edit_listing_submit(
             except Exception: pass
             db.delete(img)
 
+    # New Photos
     if new_photos:
         from routers.admin_portal import _ensure_upload_dir
         upload_dir = _ensure_upload_dir(property_id)
@@ -285,11 +310,10 @@ async def edit_listing_submit(
             rel_path = f"uploads/properties/{property_id}/{dest.name}"
             db.add(PropertyImage(property_id=property_id, file_path=rel_path))
 
+    # Pricing Rules
     db.query(PriceRule).filter(PriceRule.property_id == property_id).delete()
     for i in range(len(price_start_date)):
-        start = price_start_date[i]
-        end = price_end_date[i]
-        val = price_val[i]
+        start, end, val = price_start_date[i], price_end_date[i], price_val[i]
         wd = price_weekday[i] if i < len(price_weekday) else ""
         if not start or not end or not val: continue
         weekday_val = int(wd) if (wd is not None and str(wd).strip() != "") else None

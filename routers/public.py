@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import os
 from typing import Optional, Dict, Any, List, Tuple
 
@@ -109,7 +109,6 @@ def index(
 def listing_detail(
     property_id: int,
     request: Request,
-    ym: Optional[str] = None,
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user_optional),
 ):
@@ -117,63 +116,36 @@ def listing_detail(
     if not prop:
         raise HTTPException(status_code=404, detail="Listing not found")
 
-    # Determine which month to display (YYYY-MM)
-    today = date.today()
-    if ym:
-        try:
-            year, month = ym.split("-")
-            anchor = date(int(year), int(month), 1)
-        except Exception:
-            anchor = date(today.year, today.month, 1)
-    else:
-        anchor = date(today.year, today.month, 1)
-
-    month1 = anchor
-    month2 = _add_months(anchor, 1)
-
-    # Bookings covering the two-month window
-    start_window = month1
-    end_window = _add_months(month2, 1)  # start of month after month2
-    bookings = (
-        db.query(Booking)
-        .filter(
-            Booking.property_id == property_id,
-            Booking.status.in_([BookingStatus.pending, BookingStatus.confirmed]),
-            Booking.end_date > start_window,
-            Booking.start_date < end_window,
-        )
-        .all()
-    )
-    status_map = _date_status_map(bookings)
-
-    images = (
-        db.query(PropertyImage)
-        .filter(PropertyImage.property_id == property_id)
-        .order_by(PropertyImage.id.asc())
-        .all()
-    )
-
-    # Map coords (exact vs approximate)
-    map_lat = prop.latitude
-    map_lon = prop.longitude
-    map_is_exact = bool(prop.is_exact_location)
-    if map_lat is not None and map_lon is not None and not map_is_exact:
-        map_lat, map_lon = _approx_coords(prop.id, float(map_lat), float(map_lon))
-
-    prev_ym = _add_months(month1, -1).strftime("%Y-%m")
-    next_ym = _add_months(month1, 1).strftime("%Y-%m")
-
-    # FIX: Fetch and serialize PriceRules to clean JSON dictionaries
-    price_rules_raw = db.query(PriceRule).filter(PriceRule.property_id == property_id).all()
+    # 1. Fetch 9 months of availability for client-side browsing
+    start_window = date.today().replace(day=1)
+    end_window = start_window + timedelta(days=270) # ~9 months
     
-    price_rules_json = []
-    for r in price_rules_raw:
-        price_rules_json.append({
+    bookings = db.query(Booking).filter(
+        Booking.property_id == property_id,
+        Booking.status.in_([BookingStatus.pending, BookingStatus.confirmed]),
+        Booking.end_date >= start_window,
+        Booking.start_date <= end_window
+    ).all()
+    
+    full_status_map = _date_status_map(bookings)
+
+    # 2. Fetch and serialize pricing rules
+    price_rules_raw = db.query(PriceRule).filter(PriceRule.property_id == property_id).all()
+    price_rules_json = [
+        {
             "start_date": r.start_date.isoformat() if r.start_date else None,
             "end_date": r.end_date.isoformat() if r.end_date else None,
             "price_per_night": r.price_per_night,
             "weekday": r.weekday
-        })
+        } for r in price_rules_raw
+    ]
+
+    images = db.query(PropertyImage).filter(PropertyImage.property_id == property_id).order_by(PropertyImage.id.asc()).all()
+    
+    map_lat, map_lon = prop.latitude, prop.longitude
+    map_is_exact = bool(prop.is_exact_location)
+    if map_lat is not None and map_lon is not None and not map_is_exact:
+        map_lat, map_lon = _approx_coords(prop.id, float(map_lat), float(map_lon))
 
     return templates.TemplateResponse(
         "listing_detail.html",
@@ -182,17 +154,11 @@ def listing_detail(
             "user": user,
             "property": prop,
             "images": images,
-            "month1": month1,
-            "month2": month2,
-            "weeks1": _iter_month_days(month1.year, month1.month),
-            "weeks2": _iter_month_days(month2.year, month2.month),
-            "status_map": status_map,
-            "prev_ym": prev_ym,
-            "next_ym": next_ym,
-            "google_maps_key": os.getenv("GOOGLE_MAPS_EMBED_KEY", ""),
+            "status_map": full_status_map,
+            "price_rules": price_rules_json,
             "map_lat": map_lat,
             "map_lon": map_lon,
             "map_is_exact": map_is_exact,
-            "price_rules": price_rules_json,  # Pass the serialized list
+            "google_maps_key": os.getenv("GOOGLE_MAPS_EMBED_KEY", ""),
         },
     )
